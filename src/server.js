@@ -57,10 +57,12 @@ app.get('/health', (req, res) => {
 app.get('/api/config', (req, res) => {
     res.json({
         vapiPublicKey: process.env.VAPI_PUBLIC_KEY,
-        squadId: process.env.VAPI_SQUAD_ID,  // Squad for transfers
-        assistantId: process.env.VAPI_ASSISTANT_ID,  // Fallback (Sophie)
-        // Individual assistant IDs
+        squadId: process.env.VAPI_SQUAD_ID,  // Squad for phone transfers
+        assistantId: process.env.VAPI_ASSISTANT_ID,  // Default
+        alexId: process.env.ALEX_ASSISTANT_ID,  // Unified agent for web
+        // Individual assistant IDs (for reference)
         assistantIds: {
+            alex: process.env.ALEX_ASSISTANT_ID,
             sophie: process.env.SOPHIE_ASSISTANT_ID || process.env.VAPI_ASSISTANT_ID,
             marcus: process.env.MARCUS_ASSISTANT_ID,
             emma: process.env.EMMA_ASSISTANT_ID

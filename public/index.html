@@ -385,23 +385,19 @@
                         <button class="call-button" id="callButton" onclick="toggleCall()">📞</button>
                         <div class="call-label">AI Voice Squad</div>
                         <div class="agent-info" id="currentAgent">
-                            <div class="agent-avatar" id="agentAvatar">👋</div>
+                            <div class="agent-avatar" id="agentAvatar">🤖</div>
                             <div>
-                                <div class="agent-name" id="agentName">Sophie</div>
-                                <div class="agent-title" id="agentTitle">Welcome Agent</div>
+                                <div class="agent-name" id="agentName">Alex</div>
+                                <div class="agent-title" id="agentTitle">Customer Service</div>
                             </div>
                         </div>
                         <div style="margin-top: 1rem;">
                             <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                <span class="agent-chip" id="chip-sophie" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem;">👋 Sophie</span>
-                                <span style="color: var(--text-muted); font-size: 0.7rem;">→</span>
-                                <span class="agent-chip" id="chip-marcus" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem;">💼 Marcus</span>
-                                <span style="color: var(--text-muted); font-size: 0.7rem;">→</span>
-                                <span class="agent-chip" id="chip-emma" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem;">📅 Emma</span>
+                                <span class="agent-chip" id="chip-alex" style="background: var(--primary-subtle); color: var(--primary); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; border: 2px solid var(--primary);">🤖 Alex</span>
                             </div>
                         </div>
                         <div style="margin-top: 0.75rem; font-size: 0.65rem; color: var(--text-muted); line-height: 1.4;">
-                            Auto-routing: Sophie verifies → Marcus collects → Emma books
+                            Alex handles: Verify → Pay → Book (all-in-one)
                         </div>
                     </div>
                     
@@ -883,6 +879,7 @@
         // =================================================================
         
         const agents = {
+            alex: { name: 'Alex', title: 'Customer Service', avatar: '🤖', color: '#E85D04' },
             sophie: { name: 'Sophie', title: 'Welcome Agent', avatar: '👋', color: '#E85D04' },
             marcus: { name: 'Marcus', title: 'Debt Specialist', avatar: '💼', color: '#3B82F6' },
             emma: { name: 'Emma', title: 'Appointment Agent', avatar: '📅', color: '#22C55E' }
@@ -940,25 +937,20 @@
         // VAPI
         // =================================================================
         
-        let vapi = null, isCallActive = false, ASSISTANT_ID = null, SQUAD_ID = null;
+        let vapi = null, isCallActive = false, ASSISTANT_ID = null, SQUAD_ID = null, ALEX_ID = null;
         
         async function toggleCall() {
             if (!vapi) { alert('Vapi not initialized'); return; }
             if (isCallActive) { vapi.stop(); } 
             else {
-                document.getElementById('callStatus').textContent = `Connecting to Squad...`;
-                setCurrentAgent('sophie');  // Squad starts with Sophie
+                document.getElementById('callStatus').textContent = `Connecting to Alex...`;
+                setCurrentAgent('alex');
                 
-                if (SQUAD_ID) {
-                    // Use Squad for transfers between agents
-                    console.log('[Vapi] Starting call with Squad:', SQUAD_ID);
-                    await vapi.start({ squadId: SQUAD_ID });
-                } else {
-                    // Fallback to individual assistant
-                    const agentId = assistantIds[selectedAgentKey] || ASSISTANT_ID;
-                    console.log(`[Vapi] Starting call with ${selectedAgentKey}:`, agentId);
-                    await vapi.start(agentId);
-                }
+                // Web calls use Alex (unified agent - handles full flow)
+                // Phone calls use Squad (configured in Vapi dashboard)
+                const alexId = ALEX_ID || ASSISTANT_ID;
+                console.log('[Vapi] Starting web call with Alex:', alexId);
+                await vapi.start(alexId);
             }
         }
         
@@ -968,14 +960,16 @@
                 const config = await res.json();
                 ASSISTANT_ID = config.assistantId;
                 SQUAD_ID = config.squadId;
+                ALEX_ID = config.alexId;
                 
-                // Store squad assistant IDs
+                // Store assistant IDs
                 if (config.assistantIds) {
+                    assistantIds.alex = config.assistantIds.alex;
                     assistantIds.sophie = config.assistantIds.sophie;
                     assistantIds.marcus = config.assistantIds.marcus;
                     assistantIds.emma = config.assistantIds.emma;
                 }
-                console.log('[Vapi] Config loaded - Squad:', SQUAD_ID);
+                console.log('[Vapi] Config loaded - Alex (web):', ALEX_ID);
                 
                 const VapiConstructor = window.Vapi?.default || window.Vapi;
                 if (typeof VapiConstructor === 'function') {

@@ -220,6 +220,8 @@ You're the first voice customers hear. Your job is to:
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 300,
     
+    endCallPhrases: ['goodbye', 'bye bye', 'have a great day', 'thank you goodbye', 'that is all', 'nothing else'],
+    
     metadata: {
         agentType: 'welcome',
         agentName: 'Sophie',
@@ -267,9 +269,11 @@ You handle outstanding balances professionally and empathetically. Your job is t
 - Be understanding but persuasive - help them see why full payment helps THEM
 
 3. **Process Payment**:
-   - Confirm the amount
-   - Process using processPayment tool
-   - Give confirmation number SLOWLY
+   - Confirm the amount they want to pay
+   - Ask for payment method: "Would you like to pay by card or bank transfer?"
+   - Once they confirm amount AND payment method, process using processPayment tool
+   - Give confirmation number SLOWLY, spell it out: "Your confirmation number is P... A... Y..."
+   - Repeat the confirmation number if they ask
 
 4. **After Successful Payment**:
    If they want to book: "Excellent! Let me transfer you to Emma, our appointment specialist. She'll get your pup scheduled right away. One moment please..."
@@ -323,6 +327,8 @@ You handle outstanding balances professionally and empathetically. Your job is t
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
     
+    endCallPhrases: ['goodbye', 'bye bye', 'have a great day', 'thank you goodbye', 'that is all', 'nothing else', 'no thanks'],
+    
     metadata: {
         agentType: 'billing',
         agentName: 'Marcus',
@@ -374,6 +380,8 @@ You're the booking expert! Your job is to:
    - Confirm SLOWLY: "Let me confirm... [Service] for [Pet] on [Day], [Date] at [Time]"
    - Give confirmation number SLOWLY
    - "Is there anything else I can help you with?"
+   - If they say no: "Perfect! We'll see you then. Thank you for calling Pawsome Pet Grooming, have a wonderful day! Goodbye!"
+   - IMPORTANT: After saying goodbye, the call should end
 
 ## PERSONALITY
 - Enthusiastic and cheerful
@@ -426,6 +434,9 @@ If the customer was transferred from Marcus (had debt that was settled but not p
     serverUrl: process.env.SERVER_URL || 'https://your-server.com/vapi/webhook',
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
+    
+    endCallPhrases: ['goodbye', 'bye bye', 'have a great day', 'thank you goodbye', 'that is all', 'nothing else', 'no thanks', 'see you then'],
+    endCallMessage: 'Thank you for calling Pawsome Pet Grooming! Have a wonderful day!',
     
     metadata: {
         agentType: 'booking',
