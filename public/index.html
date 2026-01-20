@@ -392,17 +392,16 @@
                             </div>
                         </div>
                         <div style="margin-top: 1rem;">
-                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">Start with:</div>
                             <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                <button class="agent-chip" id="chip-sophie" onclick="selectAgent('sophie')" style="background: var(--primary-subtle); color: var(--primary); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 500; border: 2px solid var(--primary); cursor: pointer;">👋 Sophie</button>
-                                <button class="agent-chip" id="chip-marcus" onclick="selectAgent('marcus')" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem; border: 2px solid transparent; cursor: pointer;">💼 Marcus</button>
-                                <button class="agent-chip" id="chip-emma" onclick="selectAgent('emma')" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem; border: 2px solid transparent; cursor: pointer;">📅 Emma</button>
+                                <span class="agent-chip" id="chip-sophie" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem;">👋 Sophie</span>
+                                <span style="color: var(--text-muted); font-size: 0.7rem;">→</span>
+                                <span class="agent-chip" id="chip-marcus" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem;">💼 Marcus</span>
+                                <span style="color: var(--text-muted); font-size: 0.7rem;">→</span>
+                                <span class="agent-chip" id="chip-emma" style="background: var(--bg-main); color: var(--text-muted); padding: 0.35rem 0.6rem; border-radius: 12px; font-size: 0.7rem;">📅 Emma</span>
                             </div>
                         </div>
                         <div style="margin-top: 0.75rem; font-size: 0.65rem; color: var(--text-muted); line-height: 1.4;">
-                            <strong>Sophie</strong> greets & verifies → 
-                            <strong>Marcus</strong> handles payments → 
-                            <strong>Emma</strong> books appointments
+                            Auto-routing: Sophie verifies → Marcus collects → Emma books
                         </div>
                     </div>
                     
@@ -890,7 +889,6 @@
         };
         
         let currentAgentKey = 'sophie';
-        let selectedAgentKey = 'sophie';  // Which agent to start the call with
         
         // Assistant IDs (loaded from server)
         let assistantIds = {
@@ -898,30 +896,6 @@
             marcus: null,
             emma: null
         };
-        
-        function selectAgent(agentKey) {
-            selectedAgentKey = agentKey;
-            currentAgentKey = agentKey;
-            
-            // Update chip styles
-            ['sophie', 'marcus', 'emma'].forEach(key => {
-                const chip = document.getElementById(`chip-${key}`);
-                if (key === agentKey) {
-                    chip.style.background = 'var(--primary-subtle)';
-                    chip.style.color = 'var(--primary)';
-                    chip.style.fontWeight = '500';
-                    chip.style.border = '2px solid var(--primary)';
-                } else {
-                    chip.style.background = 'var(--bg-main)';
-                    chip.style.color = 'var(--text-muted)';
-                    chip.style.fontWeight = 'normal';
-                    chip.style.border = '2px solid transparent';
-                }
-            });
-            
-            // Update the agent display
-            setCurrentAgent(agentKey);
-        }
         
         function setCurrentAgent(agentKey) {
             currentAgentKey = agentKey;
@@ -932,17 +906,21 @@
             document.getElementById('agentName').textContent = agent.name;
             document.getElementById('agentTitle').textContent = agent.title;
             
-            // Update chips
+            // Highlight current speaking agent
             ['sophie', 'marcus', 'emma'].forEach(key => {
                 const chip = document.getElementById(`chip-${key}`);
-                if (key === agentKey) {
-                    chip.style.background = 'var(--primary-subtle)';
-                    chip.style.color = 'var(--primary)';
-                    chip.style.fontWeight = '500';
-                } else {
-                    chip.style.background = 'var(--bg-main)';
-                    chip.style.color = 'var(--text-muted)';
-                    chip.style.fontWeight = 'normal';
+                if (chip) {
+                    if (key === agentKey) {
+                        chip.style.background = 'var(--primary-subtle)';
+                        chip.style.color = 'var(--primary)';
+                        chip.style.fontWeight = '600';
+                        chip.style.border = '2px solid var(--primary)';
+                    } else {
+                        chip.style.background = 'var(--bg-main)';
+                        chip.style.color = 'var(--text-muted)';
+                        chip.style.fontWeight = 'normal';
+                        chip.style.border = '2px solid transparent';
+                    }
                 }
             });
         }
@@ -962,18 +940,25 @@
         // VAPI
         // =================================================================
         
-        let vapi = null, isCallActive = false, ASSISTANT_ID = null;
+        let vapi = null, isCallActive = false, ASSISTANT_ID = null, SQUAD_ID = null;
         
         async function toggleCall() {
             if (!vapi) { alert('Vapi not initialized'); return; }
             if (isCallActive) { vapi.stop(); } 
             else {
-                // Use the selected agent's ID
-                const agentId = assistantIds[selectedAgentKey] || ASSISTANT_ID;
-                document.getElementById('callStatus').textContent = `Connecting to ${agents[selectedAgentKey].name}...`;
-                setCurrentAgent(selectedAgentKey);
-                console.log(`[Vapi] Starting call with ${selectedAgentKey}:`, agentId);
-                await vapi.start(agentId);
+                document.getElementById('callStatus').textContent = `Connecting to Squad...`;
+                setCurrentAgent('sophie');  // Squad starts with Sophie
+                
+                if (SQUAD_ID) {
+                    // Use Squad for transfers between agents
+                    console.log('[Vapi] Starting call with Squad:', SQUAD_ID);
+                    await vapi.start({ squadId: SQUAD_ID });
+                } else {
+                    // Fallback to individual assistant
+                    const agentId = assistantIds[selectedAgentKey] || ASSISTANT_ID;
+                    console.log(`[Vapi] Starting call with ${selectedAgentKey}:`, agentId);
+                    await vapi.start(agentId);
+                }
             }
         }
         
@@ -982,14 +967,15 @@
                 const res = await fetch('/api/config');
                 const config = await res.json();
                 ASSISTANT_ID = config.assistantId;
+                SQUAD_ID = config.squadId;
                 
                 // Store squad assistant IDs
                 if (config.assistantIds) {
                     assistantIds.sophie = config.assistantIds.sophie;
                     assistantIds.marcus = config.assistantIds.marcus;
                     assistantIds.emma = config.assistantIds.emma;
-                    console.log('[Vapi] Squad loaded:', assistantIds);
                 }
+                console.log('[Vapi] Config loaded - Squad:', SQUAD_ID);
                 
                 const VapiConstructor = window.Vapi?.default || window.Vapi;
                 if (typeof VapiConstructor === 'function') {

@@ -11,6 +11,7 @@
 // TRANSFER TOOLS (Vapi built-in)
 // =============================================================================
 
+// Transfer tools - names must match EXACTLY what's in Vapi Dashboard
 const transferToMarcusTool = {
     type: 'transferCall',
     destinations: [{
@@ -194,9 +195,9 @@ You're the first voice customers hear. Your job is to:
 - NEVER book appointments - that's Emma's job
 - Your job is to greet, verify, and route appropriately
 - Keep interactions brief - you're the connector, not the resolver
-- Use the transfer tools to route customers to the right specialist`
+- Route customers to the right specialist`
         }],
-        tools: [verifyIdentityTool, getBalanceTool, transferToMarcusTool, transferToEmmaTool]
+        tools: [verifyIdentityTool, getBalanceTool]  // Transfers removed for now
     },
     
     voice: {
@@ -288,9 +289,9 @@ You handle outstanding balances professionally and empathetically. Your job is t
 - Explain the 70% settlement option
 - After payment, ALWAYS offer to transfer to Emma for booking
 - If customer refuses to pay, offer a callback from manager
-- Use the transfer tool to send customers to Emma after payment`
+- Help customers with payments`
         }],
-        tools: [getBalanceTool, processPaymentTool, checkEligibilityTool, transferToEmmaTool]
+        tools: [getBalanceTool, processPaymentTool, checkEligibilityTool]  // Transfers removed for now
     },
     
     voice: {
@@ -390,11 +391,11 @@ If the customer was transferred from Marcus (had debt that was settled but not p
 
 ## IMPORTANT
 - Check eligibility before booking
-- If not eligible, explain they need to speak with Marcus first and transfer them
+- If not eligible, explain they need to speak with Marcus first
 - Always confirm pet name, service, date, and time
 - Be enthusiastic - this should be a positive experience!`
         }],
-        tools: [checkEligibilityTool, getSlotsTool, bookAppointmentTool, transferToMarcusTool]
+        tools: [checkEligibilityTool, getSlotsTool, bookAppointmentTool]  // Transfers removed for now
     },
     
     voice: {

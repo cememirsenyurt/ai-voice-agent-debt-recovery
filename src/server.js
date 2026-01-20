@@ -53,12 +53,13 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Client config endpoint (serves public key and assistant IDs to frontend)
+// Client config endpoint (serves public key, squad ID, and assistant IDs to frontend)
 app.get('/api/config', (req, res) => {
     res.json({
         vapiPublicKey: process.env.VAPI_PUBLIC_KEY,
-        assistantId: process.env.VAPI_ASSISTANT_ID,  // Default (Sophie)
-        // Squad assistant IDs
+        squadId: process.env.VAPI_SQUAD_ID,  // Squad for transfers
+        assistantId: process.env.VAPI_ASSISTANT_ID,  // Fallback (Sophie)
+        // Individual assistant IDs
         assistantIds: {
             sophie: process.env.SOPHIE_ASSISTANT_ID || process.env.VAPI_ASSISTANT_ID,
             marcus: process.env.MARCUS_ASSISTANT_ID,
