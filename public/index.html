@@ -420,8 +420,8 @@
         </div>
     </main>
     
-    <!-- Vapi Web SDK -->
-    <script src="https://unpkg.com/@vapi-ai/web@latest/dist/vapi.iife.js"></script>
+    <!-- Vapi Web SDK - Bundled locally -->
+    <script src="/vapi-bundle.js"></script>
     <script>
         // =================================================================
         // CONFIGURATION - Loaded from server (keeps keys secure in .env)
@@ -477,19 +477,17 @@
                 ASSISTANT_ID = config.assistantId;
                 
                 if (VAPI_PUBLIC_KEY && ASSISTANT_ID) {
-                    // Check what Vapi looks like from the IIFE bundle
-                    console.log('🔍 Checking Vapi global:', typeof window.Vapi, window.Vapi);
+                    // The bundled SDK exposes Vapi on window
+                    console.log('🔍 Checking Vapi:', typeof window.Vapi);
                     
-                    // The IIFE bundle exposes Vapi on window
+                    // Get the Vapi constructor from our bundle
                     const VapiConstructor = window.Vapi?.default || window.Vapi;
-                    console.log('🔍 VapiConstructor:', typeof VapiConstructor, VapiConstructor);
+                    console.log('🔍 VapiConstructor:', typeof VapiConstructor);
                     
                     if (typeof VapiConstructor === 'function') {
                         vapi = new VapiConstructor(VAPI_PUBLIC_KEY);
-                    } else if (typeof VapiConstructor === 'object' && VapiConstructor.default) {
-                        vapi = new VapiConstructor.default(VAPI_PUBLIC_KEY);
                     } else {
-                        throw new Error('Vapi SDK not loaded correctly. Type: ' + typeof VapiConstructor);
+                        throw new Error('Vapi SDK not loaded correctly. Got: ' + typeof VapiConstructor);
                     }
                     
                     setupVapiListeners();
