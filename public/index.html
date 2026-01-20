@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pawsome Pet Grooming | Debt Recovery Portal</title>
+    <title>Pawsome Pet Grooming | Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -273,7 +273,7 @@
                 <div class="logo-icon">🐕</div>
                 <div>
                     <div class="logo-text">Pawsome</div>
-                    <div class="logo-subtitle">Debt Recovery</div>
+                    <div class="logo-subtitle">Pet Grooming</div>
                 </div>
             </div>
         </div>
@@ -304,7 +304,7 @@
                 <div class="user-avatar">AD</div>
                 <div class="user-info">
                     <div class="user-name">Admin User</div>
-                    <div class="user-role">Recovery Agent</div>
+                    <div class="user-role">Staff</div>
                 </div>
             </div>
         </div>
@@ -313,7 +313,7 @@
     <!-- Main Content -->
     <main class="main">
         <header class="header">
-            <h1 class="page-title" id="pageTitle">Recovery Dashboard</h1>
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
             <div class="header-actions">
                 <div class="status-badge">
                     <span class="status-dot"></span>
@@ -343,7 +343,7 @@
                             <div class="stat-change positive" id="successfulCalls">0 successful</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Recovery Rate</div>
+                            <div class="stat-label">Cleared Rate</div>
                             <div class="stat-value" id="recoveryRate">0%</div>
                             <div class="stat-change positive">Based on payments</div>
                         </div>
@@ -856,7 +856,7 @@
             document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
             
-            const titles = { dashboard: 'Recovery Dashboard', customers: 'Customer Management', calls: 'Call History', payments: 'Payments', schedule: 'Schedule & Appointments' };
+            const titles = { dashboard: 'Dashboard', customers: 'Customer Management', calls: 'Call History', payments: 'Payments', schedule: 'Schedule & Appointments' };
             document.getElementById('pageTitle').textContent = titles[page] || 'Dashboard';
             
             // Refresh data when navigating
