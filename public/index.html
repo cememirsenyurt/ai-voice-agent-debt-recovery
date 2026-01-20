@@ -420,11 +420,9 @@
         </div>
     </main>
     
-    <!-- Vapi Web SDK - Using Daily for WebRTC -->
-    <script type="module">
-        // Import Vapi from CDN using ES module
-        import Vapi from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm';
-        
+    <!-- Vapi Web SDK -->
+    <script src="https://unpkg.com/@vapi-ai/web@latest/dist/vapi.iife.js"></script>
+    <script>
         // =================================================================
         // CONFIGURATION - Loaded from server (keeps keys secure in .env)
         // =================================================================
@@ -439,8 +437,8 @@
         let vapi = null;
         let isCallActive = false;
         
-        // Make toggleCall available globally
-        window.toggleCall = async function() {
+        // Toggle call on/off
+        async function toggleCall() {
             console.log('🔘 Toggle call clicked. vapi:', !!vapi, 'isActive:', isCallActive);
             
             if (!vapi) {
@@ -464,7 +462,7 @@
                     alert('Failed to start call: ' + (error.message || 'Unknown error'));
                 }
             }
-        };
+        }
         
         // Initialize Vapi when page loads - fetch config from server
         async function init() {
@@ -479,8 +477,21 @@
                 ASSISTANT_ID = config.assistantId;
                 
                 if (VAPI_PUBLIC_KEY && ASSISTANT_ID) {
-                    // Initialize Vapi with public key
-                    vapi = new Vapi(VAPI_PUBLIC_KEY);
+                    // Check what Vapi looks like from the IIFE bundle
+                    console.log('🔍 Checking Vapi global:', typeof window.Vapi, window.Vapi);
+                    
+                    // The IIFE bundle exposes Vapi on window
+                    const VapiConstructor = window.Vapi?.default || window.Vapi;
+                    console.log('🔍 VapiConstructor:', typeof VapiConstructor, VapiConstructor);
+                    
+                    if (typeof VapiConstructor === 'function') {
+                        vapi = new VapiConstructor(VAPI_PUBLIC_KEY);
+                    } else if (typeof VapiConstructor === 'object' && VapiConstructor.default) {
+                        vapi = new VapiConstructor.default(VAPI_PUBLIC_KEY);
+                    } else {
+                        throw new Error('Vapi SDK not loaded correctly. Type: ' + typeof VapiConstructor);
+                    }
+                    
                     setupVapiListeners();
                     console.log('✅ Vapi initialized successfully');
                     console.log('   Public Key:', VAPI_PUBLIC_KEY.substring(0, 8) + '...');
@@ -574,7 +585,7 @@
         }
         
         // Initialize when DOM is ready
-        init();
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
