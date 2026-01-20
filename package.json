@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "deploy": "node scripts/deploy-assistant.js"
+    "deploy": "node scripts/deploy-assistant.js",
+    "test:tools": "node scripts/test-tools.js"
   },
   "keywords": [
     "vapi",
