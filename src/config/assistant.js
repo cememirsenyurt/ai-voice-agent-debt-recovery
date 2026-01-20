@@ -14,6 +14,25 @@
  */
 
 // =============================================================================
+// SERVER URL CONFIGURATION (for Render deployment)
+// =============================================================================
+
+// Render automatically provides RENDER_EXTERNAL_URL
+// Priority: SERVER_URL (manual) > RENDER_EXTERNAL_URL (Render auto) > placeholder
+function getServerUrl() {
+    if (process.env.SERVER_URL) {
+        return process.env.SERVER_URL;
+    }
+    if (process.env.RENDER_EXTERNAL_URL) {
+        return process.env.RENDER_EXTERNAL_URL;
+    }
+    // Fallback for local development
+    return 'http://localhost:3000';
+}
+
+const SERVER_URL = getServerUrl();
+
+// =============================================================================
 // SYSTEM PROMPT
 // =============================================================================
 
@@ -308,7 +327,8 @@ const assistantConfig = {
     ],
     
     // Server configuration for tool execution
-    serverUrl: process.env.SERVER_URL || 'https://your-server.com/vapi/webhook',
+    // Uses RENDER_EXTERNAL_URL on Render, SERVER_URL if manually set, or localhost for dev
+    serverUrl: `${SERVER_URL}/vapi/webhook`,
     
     // Additional settings
     silenceTimeoutSeconds: 30,     // End call after 30s of silence

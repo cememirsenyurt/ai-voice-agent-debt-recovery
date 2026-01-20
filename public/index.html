@@ -979,7 +979,7 @@
                         isCallActive = true;
                         document.getElementById('callButton').classList.add('active');
                         document.getElementById('callButton').textContent = '⏹️';
-                        const agent = agents[selectedAgentKey];
+                        const agent = agents[currentAgentKey];
                         document.getElementById('callStatus').textContent = `Connected to ${agent.name}`;
                         document.getElementById('transcript').innerHTML = '';
                     });

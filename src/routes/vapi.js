@@ -43,7 +43,7 @@ router.post('/webhook', async (req, res) => {
                 
                 if (message.status === 'in-progress') {
                     // Call started - create tracking entry
-                    const callId = body.call?.id || `call-${Date.now()}`;
+                    const callId = req.body.call?.id || `call-${Date.now()}`;
                     activeCalls.set(callId, {
                         startTime: Date.now(),
                         customerName: 'Unknown',

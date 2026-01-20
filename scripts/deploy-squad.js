@@ -11,7 +11,8 @@ require('dotenv').config();
 const { sophieConfig, marcusConfig, emmaConfig } = require('../src/config/squad');
 
 const VAPI_API_KEY = process.env.VAPI_PRIVATE_KEY;
-const SERVER_URL = process.env.SERVER_URL;
+// Support both SERVER_URL (manual) and RENDER_EXTERNAL_URL (from Render)
+const SERVER_URL = process.env.SERVER_URL || process.env.RENDER_EXTERNAL_URL;
 
 if (!VAPI_API_KEY) {
     console.error('❌ VAPI_PRIVATE_KEY not found in .env');
@@ -20,6 +21,8 @@ if (!VAPI_API_KEY) {
 
 if (!SERVER_URL) {
     console.error('❌ SERVER_URL not found in .env');
+    console.error('   For Render deployments, set SERVER_URL to your Render app URL:');
+    console.error('   Example: SERVER_URL=https://your-app-name.onrender.com');
     process.exit(1);
 }
 

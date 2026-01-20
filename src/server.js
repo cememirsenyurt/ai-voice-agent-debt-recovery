@@ -203,17 +203,33 @@ app.use((err, req, res, next) => {
 // SERVER STARTUP
 // =============================================================================
 
+// Get the external URL for webhooks (Render provides RENDER_EXTERNAL_URL)
+const getExternalUrl = () => {
+    if (process.env.SERVER_URL) return process.env.SERVER_URL;
+    if (process.env.RENDER_EXTERNAL_URL) return process.env.RENDER_EXTERNAL_URL;
+    return `http://localhost:${PORT}`;
+};
+
 app.listen(PORT, () => {
+    const externalUrl = getExternalUrl();
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     console.log('='.repeat(60));
     console.log('🐕 Pawsome Pet Grooming - Debt Recovery Voice Agent');
     console.log('='.repeat(60));
     console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
     console.log('');
     console.log('📍 Endpoints:');
-    console.log(`   Web Interface:  http://localhost:${PORT}`);
-    console.log(`   Health Check:   http://localhost:${PORT}/health`);
-    console.log(`   Vapi Webhook:   http://localhost:${PORT}/vapi/webhook`);
-    console.log(`   API:            http://localhost:${PORT}/api/*`);
+    console.log(`   Web Interface:  ${externalUrl}`);
+    console.log(`   Health Check:   ${externalUrl}/health`);
+    console.log(`   Vapi Webhook:   ${externalUrl}/vapi/webhook`);
+    console.log(`   API:            ${externalUrl}/api/*`);
+    console.log('');
+    if (isProduction) {
+        console.log('⚠️  IMPORTANT: Make sure your Vapi assistant webhook URL is set to:');
+        console.log(`   ${externalUrl}/vapi/webhook`);
+    }
     console.log('='.repeat(60));
 });
 

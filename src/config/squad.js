@@ -8,6 +8,25 @@
  */
 
 // =============================================================================
+// SERVER URL CONFIGURATION (for Render deployment)
+// =============================================================================
+
+// Render automatically provides RENDER_EXTERNAL_URL
+// Priority: SERVER_URL (manual) > RENDER_EXTERNAL_URL (Render auto) > placeholder
+function getServerUrl() {
+    if (process.env.SERVER_URL) {
+        return process.env.SERVER_URL;
+    }
+    if (process.env.RENDER_EXTERNAL_URL) {
+        return process.env.RENDER_EXTERNAL_URL;
+    }
+    // Fallback for local development
+    return 'http://localhost:3000';
+}
+
+const SERVER_URL = getServerUrl();
+
+// =============================================================================
 // TRANSFER TOOLS (Vapi built-in)
 // =============================================================================
 
@@ -216,7 +235,7 @@ You're the first voice customers hear. Your job is to:
     
     firstMessage: "Hi there! Thank you for calling Pawsome Pet Grooming! I'm Sophie, your friendly welcome assistant. Are you calling to schedule an appointment for your fur baby today?",
     
-    serverUrl: process.env.SERVER_URL || 'https://your-server.com/vapi/webhook',
+    serverUrl: `${SERVER_URL}/vapi/webhook`,
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 300,
     
@@ -323,7 +342,7 @@ You handle outstanding balances professionally and empathetically. Your job is t
     
     firstMessage: "Hi there! This is Marcus from the billing department. I understand you're looking to get your account squared away so you can book an appointment. Let me help you with that.",
     
-    serverUrl: process.env.SERVER_URL || 'https://your-server.com/vapi/webhook',
+    serverUrl: `${SERVER_URL}/vapi/webhook`,
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
     
@@ -431,7 +450,7 @@ If the customer was transferred from Marcus (had debt that was settled but not p
     
     firstMessage: "Hi there! This is Emma, your appointment specialist! I'm so excited to help get your fur baby scheduled for some pampering. What kind of grooming service are you looking for today?",
     
-    serverUrl: process.env.SERVER_URL || 'https://your-server.com/vapi/webhook',
+    serverUrl: `${SERVER_URL}/vapi/webhook`,
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
     

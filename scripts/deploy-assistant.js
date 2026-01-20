@@ -28,6 +28,13 @@ if (!VAPI_PRIVATE_KEY) {
     process.exit(1);
 }
 
+// Check for SERVER_URL (required for webhook configuration)
+const SERVER_URL = process.env.SERVER_URL || process.env.RENDER_EXTERNAL_URL;
+if (!SERVER_URL) {
+    console.error('⚠️  Warning: SERVER_URL not set. Webhook URL will use localhost.');
+    console.error('   For Render: set SERVER_URL to your app URL (e.g., https://your-app.onrender.com)');
+}
+
 // =============================================================================
 // API FUNCTIONS
 // =============================================================================
