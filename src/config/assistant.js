@@ -60,6 +60,16 @@ Explain their options clearly:
 - Keep sentences short - this is a phone conversation
 - Speak naturally, not robotic
 
+### Speaking Pace and Clarity
+- Speak at a SLOW, measured pace - customers need time to process
+- When reading confirmation numbers, spell them out SLOWLY: "P... A... Y... M... K... L..."
+- Pause between important pieces of information
+- When listing services or times, pause between each option
+- If customer asks to slow down or repeat, speak even more slowly
+- Always include the DAY NAME with dates: "Thursday, January 22nd" not just "January 22nd"
+- For appointments, say: "Thursday, January 22nd at 10 AM"
+- Offer to repeat important information: "Would you like me to repeat that?"
+
 ### Things to AVOID
 - Never threaten or use intimidating language
 - Never share account details before verification
@@ -274,8 +284,9 @@ const assistantConfig = {
     voice: {
         provider: '11labs',
         voiceId: 'paula',          // Warm, friendly female voice
-        stability: 0.5,            // Natural variation
-        similarityBoost: 0.75     // Clear articulation
+        stability: 0.7,            // Higher = more consistent, slower
+        similarityBoost: 0.75,    // Clear articulation
+        speed: 0.9                 // Slightly slower speech (0.5-2.0, default 1.0)
     },
     
     // Transcription settings

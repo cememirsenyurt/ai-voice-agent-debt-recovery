@@ -293,21 +293,45 @@ function getAvailableSlots({ customerId }) {
         };
     }
 
-    // Return available slots
+    // Format slots with day names for better voice output
+    const formattedSlots = availableSlots
+        .filter(s => s.available)
+        .map(s => ({
+            date: s.date,
+            dayName: s.dayName,
+            time: s.time,
+            // Voice-friendly format: "Thursday, January 22nd at 10:00 AM"
+            voiceFormat: `${s.dayName}, January ${parseInt(s.date.split('-')[2])}${getOrdinalSuffix(parseInt(s.date.split('-')[2]))} at ${s.time}`
+        }));
+
+    // Format services for voice - just names and prices
+    const formattedServices = Object.entries(services).map(([key, service]) => ({
+        id: key,
+        name: service.name,
+        price: service.price,
+        voiceFormat: `${service.name} for $${service.price}`
+    }));
+
     return {
         success: true,
         requiresPrepayment: eligibility.requiresPrepayment,
-        slots: availableSlots.filter(s => s.available),
-        services: Object.entries(services).map(([key, service]) => ({
-            id: key,
-            name: service.name,
-            price: service.price,
-            duration: service.duration
-        })),
+        slots: formattedSlots,
+        services: formattedServices,
         message: eligibility.requiresPrepayment 
-            ? 'Here are available slots. Remember, prepayment is required for booking.'
-            : 'Here are available appointment slots.'
+            ? 'Here are available slots. Remember, prepayment is required for booking. Please speak slowly when listing these to the customer.'
+            : 'Here are available appointment slots. Please speak slowly when listing these to the customer.'
     };
+}
+
+// Helper function for ordinal suffixes (1st, 2nd, 3rd, etc.)
+function getOrdinalSuffix(day) {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+    }
 }
 
 /**

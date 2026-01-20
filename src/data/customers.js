@@ -142,12 +142,12 @@ const services = {
 // =============================================================================
 
 const availableSlots = [
-    { date: '2026-01-22', time: '10:00 AM', available: true },
-    { date: '2026-01-22', time: '2:00 PM', available: true },
-    { date: '2026-01-23', time: '9:00 AM', available: true },
-    { date: '2026-01-23', time: '11:00 AM', available: true },
-    { date: '2026-01-24', time: '10:00 AM', available: true },
-    { date: '2026-01-24', time: '3:00 PM', available: true }
+    { date: '2026-01-22', dayName: 'Thursday', time: '10:00 AM', available: true },
+    { date: '2026-01-22', dayName: 'Thursday', time: '2:00 PM', available: true },
+    { date: '2026-01-23', dayName: 'Friday', time: '9:00 AM', available: true },
+    { date: '2026-01-23', dayName: 'Friday', time: '11:00 AM', available: true },
+    { date: '2026-01-24', dayName: 'Saturday', time: '10:00 AM', available: true },
+    { date: '2026-01-24', dayName: 'Saturday', time: '3:00 PM', available: true }
 ];
 
 module.exports = {
