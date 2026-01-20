@@ -138,17 +138,38 @@ const services = {
 };
 
 // =============================================================================
-// AVAILABLE APPOINTMENT SLOTS (mock)
+// AVAILABLE APPOINTMENT SLOTS (dynamically generated)
 // =============================================================================
 
-const availableSlots = [
-    { date: '2026-01-22', dayName: 'Thursday', time: '10:00 AM', available: true },
-    { date: '2026-01-22', dayName: 'Thursday', time: '2:00 PM', available: true },
-    { date: '2026-01-23', dayName: 'Friday', time: '9:00 AM', available: true },
-    { date: '2026-01-23', dayName: 'Friday', time: '11:00 AM', available: true },
-    { date: '2026-01-24', dayName: 'Saturday', time: '10:00 AM', available: true },
-    { date: '2026-01-24', dayName: 'Saturday', time: '3:00 PM', available: true }
-];
+// Generate available slots for the next 7 days
+function generateAvailableSlots() {
+    const slots = [];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const times = ['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM'];
+    
+    const today = new Date();
+    
+    for (let i = 1; i <= 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        
+        // Skip Sundays (closed)
+        if (date.getDay() === 0) continue;
+        
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dayName = dayNames[date.getDay()];
+        
+        // Add 2-3 slots per day
+        const dayTimes = times.filter((_, idx) => idx % 2 === (i % 2)); // Alternate times
+        for (const time of dayTimes) {
+            slots.push({ date: dateStr, dayName, time, available: true });
+        }
+    }
+    
+    return slots;
+}
+
+const availableSlots = generateAvailableSlots();
 
 module.exports = {
     customers,
