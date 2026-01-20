@@ -8,6 +8,10 @@
 const express = require('express');
 const router = express.Router();
 const toolHandlers = require('../tools/handlers');
+const activity = require('../data/activity');
+
+// Track active calls
+const activeCalls = new Map();
 
 // =============================================================================
 // WEBHOOK ENDPOINT
@@ -36,6 +40,27 @@ router.post('/webhook', async (req, res) => {
             case 'status-update':
                 // Log status changes (call started, ended, etc.)
                 console.log(`[Vapi] Status update: ${message.status}`);
+                
+                if (message.status === 'in-progress') {
+                    // Call started - create tracking entry
+                    const callId = body.call?.id || `call-${Date.now()}`;
+                    activeCalls.set(callId, {
+                        startTime: Date.now(),
+                        customerName: 'Unknown',
+                        customerPhone: 'Unknown'
+                    });
+                    
+                    // Log call start
+                    activity.logCall({
+                        phone: 'Unknown',
+                        customerName: 'Incoming Call',
+                        duration: 0,
+                        status: 'in-progress',
+                        outcome: 'none',
+                        notes: 'Call in progress...'
+                    });
+                }
+                
                 return res.json({ success: true });
 
             case 'transcript':
@@ -46,6 +71,27 @@ router.post('/webhook', async (req, res) => {
             case 'end-of-call-report':
                 // Log call summary when conversation ends
                 console.log('[Vapi] Call ended:', message.endedReason);
+                
+                // Get call details from the report
+                const callSummary = message.summary || '';
+                const duration = Math.round((message.durationSeconds || 0));
+                
+                // Determine outcome based on summary
+                let outcome = 'none';
+                if (callSummary.toLowerCase().includes('payment')) outcome = 'payment';
+                else if (callSummary.toLowerCase().includes('book') || callSummary.toLowerCase().includes('appointment')) outcome = 'booking';
+                else if (callSummary.toLowerCase().includes('callback')) outcome = 'callback';
+                
+                // Log the completed call
+                activity.logCall({
+                    phone: message.call?.customer?.number || 'Web Call',
+                    customerName: message.call?.customer?.name || 'Customer',
+                    duration: duration,
+                    status: 'completed',
+                    outcome: outcome,
+                    notes: callSummary.substring(0, 200)
+                });
+                
                 return res.json({ success: true });
 
             default:

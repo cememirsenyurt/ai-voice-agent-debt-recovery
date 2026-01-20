@@ -262,10 +262,6 @@
                 <span class="nav-icon">💳</span> Payments
             </a>
             
-            <div class="nav-label" style="margin-top: 1rem;">Voice Agent</div>
-            <a class="nav-item" data-page="agent" onclick="navigateTo('dashboard')">
-                <span class="nav-icon">🤖</span> Agent Settings
-            </a>
         </nav>
         
         <div class="user-section">
@@ -490,6 +486,7 @@
                 const stats = await res.json();
                 
                 document.getElementById('totalOutstanding').textContent = `$${stats.totalOutstanding.toFixed(2)}`;
+                document.getElementById('outstandingChange').textContent = `${stats.accountsWithDebt} accounts pending`;
                 document.getElementById('activeAccounts').textContent = stats.totalAccounts;
                 document.getElementById('accountsWithDebt').textContent = `${stats.accountsWithDebt} with debt`;
                 document.getElementById('callsToday').textContent = stats.callsToday;
@@ -498,6 +495,7 @@
                 document.getElementById('callBadge').textContent = stats.callsToday;
             } catch (e) {
                 console.error('Failed to fetch stats:', e);
+                document.getElementById('outstandingChange').textContent = 'Error loading';
             }
         }
         
