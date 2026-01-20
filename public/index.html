@@ -420,9 +420,11 @@
         </div>
     </main>
     
-    <!-- Vapi Web SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.umd.js"></script>
-    <script>
+    <!-- Vapi Web SDK - Using Daily for WebRTC -->
+    <script type="module">
+        // Import Vapi from CDN using ES module
+        import Vapi from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm';
+        
         // =================================================================
         // CONFIGURATION - Loaded from server (keeps keys secure in .env)
         // =================================================================
@@ -437,8 +439,35 @@
         let vapi = null;
         let isCallActive = false;
         
+        // Make toggleCall available globally
+        window.toggleCall = async function() {
+            console.log('🔘 Toggle call clicked. vapi:', !!vapi, 'isActive:', isCallActive);
+            
+            if (!vapi) {
+                alert('Vapi not initialized. Check browser console for errors.');
+                return;
+            }
+            
+            if (isCallActive) {
+                console.log('⏹️ Stopping call...');
+                vapi.stop();
+            } else {
+                try {
+                    console.log('▶️ Starting call with assistant:', ASSISTANT_ID);
+                    document.getElementById('callStatus').textContent = 'Connecting...';
+                    
+                    await vapi.start(ASSISTANT_ID);
+                    
+                } catch (error) {
+                    console.error('❌ Failed to start call:', error);
+                    document.getElementById('callStatus').textContent = 'Failed to connect';
+                    alert('Failed to start call: ' + (error.message || 'Unknown error'));
+                }
+            }
+        };
+        
         // Initialize Vapi when page loads - fetch config from server
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             try {
                 console.log('🔄 Loading Vapi config...');
                 const response = await fetch('/api/config');
@@ -451,7 +480,7 @@
                 
                 if (VAPI_PUBLIC_KEY && ASSISTANT_ID) {
                     // Initialize Vapi with public key
-                    vapi = new window.Vapi(VAPI_PUBLIC_KEY);
+                    vapi = new Vapi(VAPI_PUBLIC_KEY);
                     setupVapiListeners();
                     console.log('✅ Vapi initialized successfully');
                     console.log('   Public Key:', VAPI_PUBLIC_KEY.substring(0, 8) + '...');
@@ -467,7 +496,7 @@
                 console.error('❌ Failed to load config:', error);
                 document.getElementById('callStatus').textContent = 'Failed to load - check server';
             }
-        });
+        }
         
         function setupVapiListeners() {
             // Call started
@@ -511,36 +540,6 @@
         }
         
         // =================================================================
-        // CALL CONTROL
-        // =================================================================
-        
-        async function toggleCall() {
-            console.log('🔘 Toggle call clicked. vapi:', !!vapi, 'isActive:', isCallActive);
-            
-            if (!vapi) {
-                alert('Vapi not initialized. Check browser console for errors.');
-                return;
-            }
-            
-            if (isCallActive) {
-                console.log('⏹️ Stopping call...');
-                vapi.stop();
-            } else {
-                try {
-                    console.log('▶️ Starting call with assistant:', ASSISTANT_ID);
-                    document.getElementById('callStatus').textContent = 'Connecting...';
-                    
-                    await vapi.start(ASSISTANT_ID);
-                    
-                } catch (error) {
-                    console.error('❌ Failed to start call:', error);
-                    document.getElementById('callStatus').textContent = 'Failed to connect';
-                    alert('Failed to start call: ' + (error.message || 'Unknown error'));
-                }
-            }
-        }
-        
-        // =================================================================
         // UI HELPERS
         // =================================================================
         
@@ -573,6 +572,9 @@
             transcript.appendChild(line);
             transcript.scrollTop = transcript.scrollHeight;
         }
+        
+        // Initialize when DOM is ready
+        init();
     </script>
 </body>
 </html>
