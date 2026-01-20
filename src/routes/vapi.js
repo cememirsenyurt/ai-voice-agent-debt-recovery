@@ -77,7 +77,14 @@ async function handleToolCalls(body, res) {
         toolCalls.map(async (toolCall) => {
             const { id, function: func } = toolCall;
             const toolName = func.name;
-            const args = JSON.parse(func.arguments || '{}');
+            
+            // Handle arguments - Vapi may send as string OR object
+            let args;
+            if (typeof func.arguments === 'string') {
+                args = JSON.parse(func.arguments || '{}');
+            } else {
+                args = func.arguments || {};
+            }
 
             console.log(`[Tool] Executing: ${toolName}`, args);
 
