@@ -7,6 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "deploy": "node scripts/deploy-assistant.js",
+    "deploy:squad": "node scripts/deploy-squad.js",
+    "update:squad": "node scripts/update-squad.js",
     "test:tools": "node scripts/test-tools.js",
     "build:vapi": "npx esbuild src/vapi-browser.js --bundle --outfile=public/vapi-bundle.js --format=iife --global-name=VapiModule",
     "postinstall": "npm run build:vapi"
