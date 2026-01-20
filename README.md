@@ -1,393 +1,289 @@
-# 🐕 AI Voice Agent for Small Business Debt Recovery
+# 🐕 Pawsome Pet Grooming - AI Voice Agent
 
-> An AI-powered voice assistant that helps a pet grooming business recover outstanding payments while maintaining positive customer relationships.
-
-**Note:** This is a hypothetical project designed for demonstration purposes only.
+> A multi-agent AI voice system for customer service, debt recovery, and appointment booking.
 
 ---
 
-## 📋 Table of Contents
+## 🎯 Live Demo
 
-- [Overview](#overview)
-- [Live Demo](#live-demo)
-- [Architecture](#architecture)
-- [Setup Instructions](#setup-instructions)
-- [The Prompt](#the-prompt)
-- [Business Logic](#business-logic)
-- [Limitations](#limitations)
-- [Future Improvements](#future-improvements)
-- [Learnings](#learnings)
+### 📞 Phone Number
+**+1 (650) 666-3505**
 
----
+Call to experience the full Squad flow:
+- **Sophie** answers and verifies your identity
+- **Marcus** handles payments (if you have a balance)
+- **Emma** books your appointment
 
-## Overview
+### 🌐 Web Dashboard
+Run locally: `http://localhost:3000`
 
-### The Problem
+### 🧪 Test Credentials
 
-A local pet grooming business ("Pawsome Pet Grooming") needs to recover payments from customers with outstanding balances. When a debtor calls to book an appointment, they should be:
-
-1. **Identified** - Verify who they are
-2. **Informed** - Tell them about their outstanding balance
-3. **Offered Solutions** - Help them resolve the balance
-4. **Enabled to Book** - Once resolved, complete their appointment
-
-### The Solution
-
-An AI voice agent built with [Vapi](https://vapi.ai) that:
-
-- Acts as a friendly customer service representative named "Alex"
-- Verifies customer identity before discussing account details
-- Professionally communicates outstanding balances
-- Offers payment options including 70% minimum settlement
-- Enforces booking rules while maintaining positive relationships
+| Customer | Phone | Verify Code | Balance | Pet |
+|----------|-------|-------------|---------|-----|
+| Sarah Johnson | 555-0101 | 0101 | $185.00 | Max |
+| Michael Chen | 555-0102 | 0102 | $95.50 | Bella, Charlie |
+| Emily Rodriguez | 555-0103 | 0103 | $0.00 ✓ | Luna |
+| David Thompson | 555-0104 | 0104 | $320.00 | Rocky, Duke |
 
 ---
 
-## Live Demo
+## 🏗️ Architecture
 
-🔗 **Agent Link:** [To be added after deployment]
-
-### Test Customers
-
-| Phone Number | Name | Balance | Scenario |
-|-------------|------|---------|----------|
-| 555-0101 | Sarah Johnson | $185.00 | Standard debt case |
-| 555-0102 | Michael Chen | $95.50 | Smaller balance |
-| 555-0103 | Emily Rodriguez | $0 | No debt (control) |
-| 555-0104 | David Thompson | $320.00 | Large balance |
-| 555-0105 | Jessica Williams | $45.00 | Partial payment made |
-
-**Verification:** Use the last 4 digits of the phone number (e.g., "0101" for Sarah)
-
----
-
-## Architecture
+### Multi-Agent Squad (Phone)
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│  Customer Call  │────▶│   Vapi Agent    │────▶│  Your Server    │
-│                 │     │   (GPT-4o)      │     │  (Express.js)   │
-│                 │◀────│                 │◀────│                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                              │
-                              │ Tools
-                              ▼
-                    ┌───────────────────┐
-                    │ • verifyIdentity  │
-                    │ • getAccountBalance│
-                    │ • processPayment  │
-                    │ • checkEligibility│
-                    │ • getAvailableSlots│
-                    │ • bookAppointment │
-                    └───────────────────┘
+Customer Call (+1 650-666-3505)
+         │
+         ▼
+┌─────────────────┐
+│     SOPHIE      │ ← Welcome Agent
+│  Greets & IDs   │
+└────────┬────────┘
+         │
+    Has debt? ──Yes──▶ ┌─────────────────┐
+         │             │     MARCUS      │ ← Debt Specialist
+         No            │ Handles Payment │
+         │             └────────┬────────┘
+         │                      │
+         ▼                      ▼
+┌─────────────────┐    ┌─────────────────┐
+│      EMMA       │◀───│   Payment OK    │
+│ Books Appointment│    └─────────────────┘
+└─────────────────┘
 ```
 
-### Technology Stack
+### Single Agent (Web)
 
-- **Voice AI Platform:** Vapi
-- **LLM:** GPT-4o (via Vapi)
-- **Voice:** ElevenLabs (Paula voice)
-- **Transcription:** Deepgram Nova-2
-- **Backend:** Node.js + Express
-- **Deployment:** Any Node.js host (Render, Railway, etc.)
+```
+Web Dashboard (localhost:3000)
+         │
+         ▼
+┌─────────────────┐
+│      ALEX       │ ← All-in-one Agent
+│  Full Service   │
+│ Verify→Pay→Book │
+└─────────────────┘
+```
+
+### Shared Backend
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     NODE.JS SERVER                           │
+├─────────────────────────────────────────────────────────────┤
+│  Tools:                                                      │
+│  • verifyIdentity    • processPayment    • bookAppointment  │
+│  • getAccountBalance • checkEligibility  • getAvailableSlots│
+├─────────────────────────────────────────────────────────────┤
+│  In-Memory Database (shared between phone & web)            │
+│  Customers │ Payments │ Bookings │ Activity Log              │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Setup Instructions
+## 🚀 Quick Start
 
-### Prerequisites
-
-- Node.js 18+
-- Vapi account ([sign up free](https://vapi.ai))
-- ngrok or similar for local testing
-
-### 1. Clone and Install
-
+### 1. Install
 ```bash
-git clone https://github.com/yourusername/ai-voice-agent-debt-recovery.git
+git clone https://github.com/cememirsenyurt/ai-voice-agent-debt-recovery.git
 cd ai-voice-agent-debt-recovery
 npm install
 ```
 
-### 2. Configure Environment
-
+### 2. Configure
 ```bash
 cp env.example .env
+# Edit .env with your Vapi keys
 ```
 
-Edit `.env` with your credentials:
-
-```env
-PORT=3000
-VAPI_PRIVATE_KEY=your_private_key_here
-VAPI_PUBLIC_KEY=your_public_key_here
-SERVER_URL=https://your-server-url.com/vapi/webhook
-```
-
-### 3. Start the Server
-
+### 3. Start Server
 ```bash
-# Development (with hot reload)
-npm run dev
-
-# Production
 npm start
 ```
 
-### 4. Expose Local Server (for testing)
-
+### 4. Start Tunnel (for phone calls)
 ```bash
-ngrok http 3000
+cloudflared tunnel --url http://localhost:3000
+# Copy the URL and update Vapi dashboard
 ```
 
-Copy the ngrok URL and update `SERVER_URL` in your `.env`
-
-### 5. Deploy Assistant to Vapi
-
+### 5. Deploy Agents
 ```bash
-npm run deploy
-```
-
-### 6. Test the Agent
-
-1. Go to [Vapi Dashboard](https://dashboard.vapi.ai)
-2. Find your assistant
-3. Use the web widget to test, or assign a phone number
-
----
-
-## The Prompt
-
-The complete system prompt is in `src/config/assistant.js`. Here's the core philosophy:
-
-### Conversation Flow
-
-```
-1. GREETING          → "Hi, thank you for calling Pawsome Pet Grooming!"
-                       ↓
-2. IDENTITY CHECK    → Ask for phone number + verify last 4 digits
-                       ↓
-3. ACCOUNT REVIEW    → Check balance, inform customer professionally
-                       ↓
-4. RESOLUTION        → Offer payment options (full or 70% settlement)
-                       ↓
-5. BOOKING           → If eligible, help schedule appointment
-```
-
-### Key Prompt Design Decisions
-
-1. **Named Persona (Alex)** - Creates consistency and human connection
-2. **Empathetic Language** - "I understand these things can happen"
-3. **Avoid Negative Terms** - Say "outstanding balance" not "debt"
-4. **Clear Options** - Always give the customer choices
-5. **Short Sentences** - Voice conversations need concise speech
-6. **Handling Objections** - Scripts for upset customers and disputes
-
-### Example Dialogue
-
-```
-Agent: "Hi, thank you for calling Pawsome Pet Grooming! This is Alex. 
-        I'd be happy to help you with your appointment. May I have 
-        your phone number?"
-
-Customer: "555-0101"
-
-Agent: "Thank you! For security, could you confirm the last 4 digits?"
-
-Customer: "0101"
-
-Agent: "Thanks for confirming, Sarah! I see you and Max are in our 
-        system. I do want to let you know there's an outstanding 
-        balance of $185 from your previous visits. I'd love to help 
-        get this resolved so we can book Max's next grooming. Would 
-        you like to take care of that today?"
+npm run deploy          # Deploy Alex (web agent)
+npm run deploy:squad    # Deploy Sophie, Marcus, Emma
+npm run update:squad    # Update Squad prompts
 ```
 
 ---
 
-## Business Logic
+## 📁 Project Structure
 
-### Rules Implemented
+```
+├── src/
+│   ├── server.js              # Express server + API endpoints
+│   ├── config/
+│   │   ├── assistant.js       # Alex configuration (web)
+│   │   └── squad.js           # Squad configuration (phone)
+│   ├── routes/
+│   │   └── vapi.js            # Vapi webhook handlers
+│   ├── tools/
+│   │   └── handlers.js        # Business logic (verify, pay, book)
+│   └── data/
+│       ├── customers.js       # Mock customer database
+│       └── activity.js        # Activity & call history
+├── public/
+│   └── index.html             # Web dashboard UI
+├── scripts/
+│   ├── deploy-assistant.js    # Deploy Alex
+│   ├── deploy-squad.js        # Deploy Squad
+│   └── update-squad.js        # Update Squad
+└── package.json
+```
+
+---
+
+## 🎭 The Agents
+
+### Sophie - Welcome Agent
+- **Voice:** Bella (ElevenLabs) - Friendly, upbeat
+- **Role:** First contact, identity verification, routing
+- **Transfers to:** Marcus (debt) or Emma (no debt)
+
+### Marcus - Debt Specialist  
+- **Voice:** Adam (ElevenLabs) - Professional, calm
+- **Role:** Payment collection, settlement negotiation
+- **Strategy:** Always recommend full payment first (better for customer)
+- **Transfers to:** Emma (after payment)
+
+### Emma - Appointment Agent
+- **Voice:** Charlotte (ElevenLabs) - Warm, enthusiastic
+- **Role:** Service selection, booking, confirmation
+- **Ends call:** After booking with proper goodbye
+
+### Alex - All-in-One (Web)
+- **Voice:** Paula (ElevenLabs) - Professional
+- **Role:** Handles complete flow without transfers
+- **Used for:** Web calls (SDK limitation - no Squad transfers)
+
+---
+
+## 💼 Business Rules
 
 | Rule | Implementation |
 |------|----------------|
-| Identity required | Must verify before any account access |
-| No booking with debt | `checkBookingEligibility` enforces this |
-| 70% minimum settlement | Calculated in `processPayment` |
-| Prepayment for settlement customers | Tracked in booking flow |
-
-### Payment Flow
-
-```javascript
-// Simplified logic from src/tools/handlers.js
-
-if (newBalance === 0) {
-    // Full payment - can book normally
-    bookingStatus = 'allowed';
-} else if (paymentAmount >= balance * 0.70) {
-    // Settlement accepted - can book with prepayment
-    bookingStatus = 'allowed_with_prepayment';
-} else {
-    // Not enough paid - cannot book
-    bookingStatus = 'blocked';
-}
-```
+| Identity verification required | Must verify before account access |
+| No booking with outstanding balance | Enforced in checkEligibility |
+| 70% minimum settlement | Calculated in processPayment |
+| Full payment = best deal | No restrictions, no prepayment |
+| Settlement = prepayment required | Future bookings need upfront payment |
 
 ---
 
-## Limitations
-
-### Current Limitations
-
-1. **No Real Payment Processing**
-   - Uses mock payment flow
-   - Production would need Stripe/Square integration
-
-2. **Mock Customer Database**
-   - In-memory data resets on server restart
-   - Production needs persistent database
-
-3. **Single Language (English)**
-   - No multi-language support currently
-   - Would need prompt variants for other languages
-
-4. **No Call Recording/Analytics**
-   - Basic logging only
-   - Production should integrate Vapi's analytics
-
-5. **Limited Edge Case Handling**
-   - No voicemail detection
-   - No handling of poor audio quality
-   - No callback scheduling for managers
-
-6. **No CRM Integration**
-   - Doesn't sync with existing business systems
-   - Manual reconciliation needed
-
-### Known Edge Cases
-
-- Customer disputes the balance → Escalate to manager
-- Customer can't pay any amount → Offer callback
-- Multiple accounts same phone → Not handled
-- Partial match on names → May cause confusion
-
----
-
-## Future Improvements
-
-### With 1 Month of Development
-
-1. **Real Payment Integration**
-   - Stripe/Square for secure card payments
-   - Payment link via SMS for convenience
-   - Recurring payment plans
-
-2. **Database & CRM Integration**
-   - Connect to existing booking systems (Acuity, Square Appointments)
-   - Real-time balance sync
-   - Customer history tracking
-
-3. **Enhanced Analytics**
-   - Recovery rate tracking
-   - Average call duration
-   - Conversion metrics
-   - A/B testing different prompts
-
-4. **Multi-Channel Support**
-   - SMS follow-up after calls
-   - Email receipts
-   - WhatsApp integration
-
-5. **Improved Conversation**
-   - Multi-language support
-   - Regional accent handling
-   - Sentiment detection for escalation
-   - Dynamic pricing/discount authority
-
-6. **Compliance & Security**
-   - PCI DSS compliance for payments
-   - Call recording with consent
-   - TCPA compliance for outbound
-   - Data encryption at rest
-
-7. **Manager Dashboard**
-   - Real-time call monitoring
-   - Manual takeover option
-   - Custom script editing
-   - Performance analytics
-
----
-
-## Learnings
-
-### Most Surprising Discoveries
-
-1. **Prompt Engineering is Critical**
-   - Small wording changes dramatically affect conversation quality
-   - "Outstanding balance" vs "debt" completely changes customer reaction
-   - Example dialogues in prompts improve consistency significantly
-
-2. **Voice UX ≠ Chat UX**
-   - Short sentences are essential
-   - Confirmation phrases matter ("Does that work for you?")
-   - Silence handling is important (don't let pauses become awkward)
-
-3. **Empathy Requires Explicitness**
-   - AI won't be empathetic by default
-   - Must explicitly script empathetic responses
-   - Giving specific phrases like "I understand" improves perception
-
-4. **Tool Design Affects Conversation Flow**
-   - Well-designed tools guide the AI naturally
-   - Tool names and descriptions matter for when AI calls them
-   - Returning structured data helps AI communicate clearly
-
-5. **Edge Cases Dominate Complexity**
-   - Happy path is 20% of the work
-   - Handling disputes, confusion, and anger is 80%
-   - Pre-scripting difficult scenarios is essential
-
----
-
-## File Structure
-
-```
-ai-voice-agent-debt-recovery/
-├── src/
-│   ├── server.js              # Express server entry point
-│   ├── config/
-│   │   └── assistant.js       # Vapi assistant configuration & prompt
-│   ├── routes/
-│   │   └── vapi.js            # Webhook route handlers
-│   ├── tools/
-│   │   └── handlers.js        # Tool function implementations
-│   └── data/
-│       └── customers.js       # Mock customer database
-├── scripts/
-│   └── deploy-assistant.js    # Vapi deployment script
-├── env.example                # Environment variables template
-├── package.json
-└── README.md
-```
-
----
-
-## API Endpoints
+## 🔧 API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Health check |
+| `/api/config` | GET | Vapi configuration |
+| `/api/customers` | GET | Customer list |
+| `/api/stats` | GET | Dashboard statistics |
+| `/api/activity` | GET | Activity feed |
+| `/api/calls` | GET | Call history |
+| `/api/payments` | GET | Payment history |
+| `/api/bookings` | GET | Booking history |
+| `/api/services` | GET | Available services |
+| `/api/slots` | GET | Available time slots |
 | `/vapi/webhook` | POST | Vapi webhook handler |
 
 ---
 
-## License
+## 🎨 Web Dashboard Features
 
-MIT
+- **Real-time stats:** Outstanding balance, active accounts, recovery rate
+- **Customer table:** View all customers, balances, status
+- **Live transcript:** See conversation in real-time
+- **Activity feed:** Track payments, bookings, calls
+- **Call history:** Review past calls
+- **Schedule view:** See available slots and bookings
 
 ---
 
-## Author
+## ⚙️ Environment Variables
 
-Built as a case study for AI voice agent development.
+```env
+# Server
+PORT=3000
+
+# Vapi Keys
+VAPI_PRIVATE_KEY=your_private_key
+VAPI_PUBLIC_KEY=your_public_key
+
+# Assistant IDs
+VAPI_ASSISTANT_ID=sophie_id
+ALEX_ASSISTANT_ID=alex_id
+SOPHIE_ASSISTANT_ID=sophie_id
+MARCUS_ASSISTANT_ID=marcus_id
+EMMA_ASSISTANT_ID=emma_id
+VAPI_SQUAD_ID=squad_id
+
+# Server URL (your tunnel URL)
+SERVER_URL=https://your-tunnel.trycloudflare.com/vapi/webhook
+```
+
+---
+
+## 🚧 Limitations
+
+| Limitation | Reason |
+|------------|--------|
+| Web calls don't support Squad transfers | Vapi Web SDK limitation |
+| In-memory database | Demo only - resets on restart |
+| Mock payments | No real payment processing |
+| Single location | No multi-branch support |
+| English only | No multi-language support |
+
+---
+
+## 🔮 Future Improvements (1 Month)
+
+- [ ] **Week 1:** PostgreSQL database, Stripe payments, proper hosting
+- [ ] **Week 2:** Sentiment analysis, smart escalation, multi-language
+- [ ] **Week 3:** SMS/email confirmations, calendar sync, CRM integration
+- [ ] **Week 4:** A/B testing prompts, predictive analytics, outbound campaigns
+
+---
+
+## 📚 Tech Stack
+
+- **Voice AI:** [Vapi](https://vapi.ai)
+- **LLM:** GPT-4o
+- **Voice:** ElevenLabs
+- **Transcription:** Deepgram Nova-2
+- **Backend:** Node.js + Express
+- **Frontend:** Vanilla HTML/CSS/JS
+- **Tunnel:** Cloudflare Tunnel
+
+---
+
+## 📝 Scripts
+
+```bash
+npm start           # Start server
+npm run deploy      # Deploy Alex to Vapi
+npm run deploy:squad # Deploy Squad (Sophie, Marcus, Emma)
+npm run update:squad # Update Squad prompts
+```
+
+---
+
+## 👤 Author
+
+**Cem Emir Senyurt**
+
+---
+
+## 📄 License
+
+MIT
