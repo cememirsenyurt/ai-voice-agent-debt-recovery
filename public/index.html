@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pawsome Pet Grooming - AI Booking Agent</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2D5A27;
+            --primary-light: #4A7C44;
+            --secondary: #F4A259;
+            --accent: #FF6B6B;
+            --bg-dark: #1A1F16;
+            --bg-card: #242B1E;
+            --text-primary: #F5F5F0;
+            --text-secondary: #A8B5A0;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .logo {
+            font-size: 2rem;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Left Panel - Info */
+        .info-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .card h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card h2 .icon {
+            font-size: 1.2rem;
+        }
+        
+        /* Test Customers */
+        .customer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .customer-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .customer-item:hover {
+            background: rgba(255,255,255,0.06);
+        }
+        
+        .customer-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .customer-phone {
+            font-family: monospace;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        .customer-balance {
+            text-align: right;
+        }
+        
+        .balance-amount {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .balance-amount.clear {
+            color: var(--primary-light);
+        }
+        
+        .pet-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            grid-column: span 2;
+        }
+        
+        /* Business Rules */
+        .rules-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .rules-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+        
+        .rules-list .bullet {
+            width: 6px;
+            height: 6px;
+            background: var(--secondary);
+            border-radius: 50%;
+            margin-top: 0.5rem;
+            flex-shrink: 0;
+        }
+        
+        /* Right Panel - Call Widget */
+        .call-panel {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .call-widget-container {
+            background: linear-gradient(145deg, var(--bg-card), #1E2419);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.08);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+        
+        .call-status {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .call-status.active {
+            color: var(--primary-light);
+        }
+        
+        .call-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, var(--primary), var(--primary-light));
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 0 8px 32px rgba(45, 90, 39, 0.3);
+        }
+        
+        .call-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 40px rgba(45, 90, 39, 0.4);
+        }
+        
+        .call-button:active {
+            transform: scale(0.98);
+        }
+        
+        .call-button.active {
+            background: linear-gradient(145deg, var(--accent), #E85555);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        
+        .call-instructions {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Transcript */
+        .transcript-area {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .transcript-line {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .transcript-line.assistant {
+            background: rgba(45, 90, 39, 0.2);
+            color: var(--primary-light);
+        }
+        
+        .transcript-line.user {
+            background: rgba(244, 162, 89, 0.1);
+            color: var(--secondary);
+        }
+        
+        /* Setup Notice */
+        .setup-notice {
+            background: rgba(244, 162, 89, 0.1);
+            border: 1px solid var(--secondary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: auto;
+        }
+        
+        .setup-notice h3 {
+            font-size: 0.95rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .setup-notice p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .setup-notice code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            main {
+                flex-direction: column;
+            }
+            
+            .call-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🐕</div>
+        <h1>Pawsome Pet Grooming</h1>
+    </header>
+    
+    <main>
+        <div class="info-panel">
+            <div class="card">
+                <h2><span class="icon">📞</span> Test Customers</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Use these phone numbers when testing. Verification code is the last 4 digits.
+                </p>
+                <div class="customer-list">
+                    <div class="customer-item">
+                        <div>
+                            <div class="customer-name">Sarah Johnson</div>
+                            <div class="customer-phone">555-0101</div>
+                        </div>
+                        <div class="customer-balance">
+                            <div class="balance-amount">$185.00</div>
+                        </div>
+                        <div class="pet-info">🐕 Max (Golden Retriever) — Standard debt case</div>
+                    </div>
+                    
+                    <div class="customer-item">
+                        <div>
+                            <div class="customer-name">Michael Chen</div>
+                            <div class="customer-phone">555-0102</div>
+                        </div>
+                        <div class="customer-balance">
+                            <div class="balance-amount">$95.50</div>
+                        </div>
+                        <div class="pet-info">🐩 Bella & Charlie (Poodles) — Smaller balance</div>
+                    </div>
+                    
+                    <div class="customer-item">
+                        <div>
+                            <div class="customer-name">Emily Rodriguez</div>
+                            <div class="customer-phone">555-0103</div>
+                        </div>
+                        <div class="customer-balance">
+                            <div class="balance-amount clear">$0.00</div>
+                        </div>
+                        <div class="pet-info">🐶 Luna (Shih Tzu) — No debt, can book freely</div>
+                    </div>
+                    
+                    <div class="customer-item">
+                        <div>
+                            <div class="customer-name">David Thompson</div>
+                            <div class="customer-phone">555-0104</div>
+                        </div>
+                        <div class="customer-balance">
+                            <div class="balance-amount">$320.00</div>
+                        </div>
+                        <div class="pet-info">🐕‍🦺 Rocky & Duke (German Shepherd, Husky) — Large balance</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="icon">📋</span> Business Rules</h2>
+                <ul class="rules-list">
+                    <li>
+                        <span class="bullet"></span>
+                        <span>Identity must be verified before discussing any account details</span>
+                    </li>
+                    <li>
+                        <span class="bullet"></span>
+                        <span>Customers with outstanding balances cannot book new appointments</span>
+                    </li>
+                    <li>
+                        <span class="bullet"></span>
+                        <span>Minimum 70% settlement unlocks booking (with prepayment required)</span>
+                    </li>
+                    <li>
+                        <span class="bullet"></span>
+                        <span>Full payment clears all restrictions for future bookings</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="setup-notice">
+                <h3>⚙️ Setup Required</h3>
+                <p>
+                    To enable the call button, you need to configure your Vapi assistant ID in <code>public/index.html</code> 
+                    and ensure your server is running. See the README for full setup instructions.
+                </p>
+            </div>
+        </div>
+        
+        <div class="call-panel">
+            <div class="call-widget-container">
+                <div class="call-status" id="callStatus">Click to start a call</div>
+                <button class="call-button" id="callButton" onclick="toggleCall()">
+                    📞
+                </button>
+                <div class="call-instructions">
+                    Press to call Alex, our AI assistant
+                </div>
+            </div>
+            
+            <div class="transcript-area" id="transcript">
+                <div style="color: var(--text-secondary); font-style: italic;">
+                    Conversation transcript will appear here...
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Vapi Web SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.min.js"></script>
+    <script>
+        // =================================================================
+        // CONFIGURATION - Update these values!
+        // =================================================================
+        
+        // Get your public key from: https://dashboard.vapi.ai/api-keys
+        const VAPI_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE';
+        
+        // Get this after running: npm run deploy
+        const ASSISTANT_ID = 'YOUR_ASSISTANT_ID_HERE';
+        
+        // =================================================================
+        // VAPI CLIENT
+        // =================================================================
+        
+        let vapi = null;
+        let isCallActive = false;
+        
+        // Initialize Vapi when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (VAPI_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY_HERE') {
+                vapi = new Vapi(VAPI_PUBLIC_KEY);
+                setupVapiListeners();
+            } else {
+                console.log('⚠️ Please configure VAPI_PUBLIC_KEY in index.html');
+            }
+        });
+        
+        function setupVapiListeners() {
+            // Call started
+            vapi.on('call-start', () => {
+                isCallActive = true;
+                updateUI('active');
+                clearTranscript();
+            });
+            
+            // Call ended
+            vapi.on('call-end', () => {
+                isCallActive = false;
+                updateUI('idle');
+            });
+            
+            // Speech events
+            vapi.on('speech-start', () => {
+                document.getElementById('callStatus').textContent = 'Alex is speaking...';
+            });
+            
+            vapi.on('speech-end', () => {
+                document.getElementById('callStatus').textContent = 'Listening...';
+            });
+            
+            // Transcripts
+            vapi.on('message', (message) => {
+                if (message.type === 'transcript') {
+                    addTranscriptLine(message.role, message.transcript);
+                }
+            });
+            
+            // Errors
+            vapi.on('error', (error) => {
+                console.error('Vapi error:', error);
+                updateUI('idle');
+                alert('Call error: ' + error.message);
+            });
+        }
+        
+        // =================================================================
+        // CALL CONTROL
+        // =================================================================
+        
+        async function toggleCall() {
+            if (!vapi) {
+                alert('Please configure your Vapi public key and assistant ID first.\n\nSee the setup instructions in README.md');
+                return;
+            }
+            
+            if (isCallActive) {
+                vapi.stop();
+            } else {
+                try {
+                    await vapi.start(ASSISTANT_ID);
+                } catch (error) {
+                    console.error('Failed to start call:', error);
+                    alert('Failed to start call. Check console for details.');
+                }
+            }
+        }
+        
+        // =================================================================
+        // UI HELPERS
+        // =================================================================
+        
+        function updateUI(state) {
+            const button = document.getElementById('callButton');
+            const status = document.getElementById('callStatus');
+            
+            if (state === 'active') {
+                button.classList.add('active');
+                button.textContent = '⏹️';
+                status.textContent = 'Connected - Alex is speaking...';
+                status.classList.add('active');
+            } else {
+                button.classList.remove('active');
+                button.textContent = '📞';
+                status.textContent = 'Click to start a call';
+                status.classList.remove('active');
+            }
+        }
+        
+        function clearTranscript() {
+            document.getElementById('transcript').innerHTML = '';
+        }
+        
+        function addTranscriptLine(role, text) {
+            const transcript = document.getElementById('transcript');
+            const line = document.createElement('div');
+            line.className = `transcript-line ${role}`;
+            line.textContent = `${role === 'assistant' ? '🤖 Alex' : '👤 You'}: ${text}`;
+            transcript.appendChild(line);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+    </script>
+</body>
+</html>

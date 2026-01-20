@@ -8,6 +8,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Import route handlers
 const vapiRoutes = require('./routes/vapi');
@@ -25,6 +26,9 @@ app.use(cors());
 
 // Parse JSON request bodies
 app.use(express.json());
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Request logging middleware (helpful for debugging)
 app.use((req, res, next) => {
@@ -72,8 +76,11 @@ app.listen(PORT, () => {
     console.log('🐕 Pawsome Pet Grooming - Debt Recovery Voice Agent');
     console.log('='.repeat(60));
     console.log(`Server running on port ${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`Vapi webhook: http://localhost:${PORT}/vapi/webhook`);
+    console.log('');
+    console.log('📍 Endpoints:');
+    console.log(`   Web Interface:  http://localhost:${PORT}`);
+    console.log(`   Health Check:   http://localhost:${PORT}/health`);
+    console.log(`   Vapi Webhook:   http://localhost:${PORT}/vapi/webhook`);
     console.log('='.repeat(60));
 });
 
