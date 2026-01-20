@@ -32,28 +32,64 @@ const BUSINESS_NAME = process.env.BUSINESS_NAME || 'Pawsome Pet Grooming';
  * @returns {Object} - Verification result with customer name if successful
  */
 function verifyIdentity({ phoneNumber, lastFourDigits }) {
-    // Normalize phone number (remove any formatting)
-    const normalizedPhone = phoneNumber?.replace(/\D/g, '');
-    const normalizedInput = lastFourDigits?.replace(/\D/g, '');
+    console.log('[verifyIdentity] Input:', { phoneNumber, lastFourDigits });
+    
+    // Normalize phone number (remove any formatting, keep only digits)
+    const normalizedPhone = (phoneNumber || '').replace(/\D/g, '');
+    const normalizedInput = (lastFourDigits || '').replace(/\D/g, '');
+    
+    console.log('[verifyIdentity] Normalized:', { normalizedPhone, normalizedInput });
 
-    // Look up customer by phone
-    const customer = Object.values(customers).find(c => {
+    // Look up customer by phone - try multiple matching strategies
+    let customer = null;
+    
+    for (const c of Object.values(customers)) {
         const customerPhone = c.phone.replace(/\D/g, '');
-        return customerPhone === normalizedPhone || 
-               customerPhone.endsWith(normalizedPhone) ||
-               normalizedPhone.endsWith(customerPhone);
-    });
+        
+        // Strategy 1: Exact match
+        if (customerPhone === normalizedPhone) {
+            customer = c;
+            break;
+        }
+        
+        // Strategy 2: Input ends with customer phone (e.g., "15550101" matches "5550101")
+        if (normalizedPhone.endsWith(customerPhone)) {
+            customer = c;
+            break;
+        }
+        
+        // Strategy 3: Customer phone ends with input (e.g., "5550101" matches "0101")
+        if (customerPhone.endsWith(normalizedPhone) && normalizedPhone.length >= 4) {
+            customer = c;
+            break;
+        }
+        
+        // Strategy 4: Last 4-7 digits match (for spoken numbers)
+        const inputLast7 = normalizedPhone.slice(-7);
+        const customerLast7 = customerPhone.slice(-7);
+        if (inputLast7 === customerLast7 && inputLast7.length >= 4) {
+            customer = c;
+            break;
+        }
+    }
+    
+    console.log('[verifyIdentity] Found customer:', customer ? customer.firstName : 'NONE');
 
     if (!customer) {
         return {
             success: false,
             verified: false,
-            message: 'No account found with this phone number. Please check the number or contact us directly.'
+            message: `No account found with phone number ${phoneNumber}. Please check the number or contact us directly.`
         };
     }
 
-    // Verify using last 4 digits of their phone
-    if (customer.verificationCode !== normalizedInput) {
+    // Verify using last 4 digits - also be flexible here
+    const customerLast4 = customer.verificationCode;
+    const inputLast4 = normalizedInput.slice(-4);
+    
+    console.log('[verifyIdentity] Verification check:', { customerLast4, inputLast4 });
+    
+    if (customerLast4 !== inputLast4 && customerLast4 !== normalizedInput) {
         return {
             success: false,
             verified: false,
@@ -62,6 +98,7 @@ function verifyIdentity({ phoneNumber, lastFourDigits }) {
     }
 
     // Successful verification
+    console.log('[verifyIdentity] SUCCESS for', customer.firstName);
     return {
         success: true,
         verified: true,
