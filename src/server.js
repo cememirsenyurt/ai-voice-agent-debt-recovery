@@ -49,6 +49,14 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Client config endpoint (serves public key and assistant ID to frontend)
+app.get('/api/config', (req, res) => {
+    res.json({
+        vapiPublicKey: process.env.VAPI_PUBLIC_KEY,
+        assistantId: process.env.VAPI_ASSISTANT_ID
+    });
+});
+
 // Vapi webhook routes
 app.use('/vapi', vapiRoutes);
 

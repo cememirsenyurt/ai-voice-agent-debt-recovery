@@ -392,11 +392,11 @@
                 </ul>
             </div>
             
-            <div class="setup-notice">
-                <h3>⚙️ Setup Required</h3>
+            <div class="setup-notice" style="background: rgba(45, 90, 39, 0.2); border-color: var(--primary-light);">
+                <h3>✅ Ready to Test!</h3>
                 <p>
-                    To enable the call button, you need to configure your Vapi assistant ID in <code>public/index.html</code> 
-                    and ensure your server is running. See the README for full setup instructions.
+                    Click the call button to talk to Alex. Use test phone numbers from the list above.
+                    <br><strong>Note:</strong> For tool calls to work, you need to expose your local server via ngrok.
                 </p>
             </div>
         </div>
@@ -424,14 +424,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.min.js"></script>
     <script>
         // =================================================================
-        // CONFIGURATION - Update these values!
+        // CONFIGURATION - Loaded from server (keeps keys secure in .env)
         // =================================================================
         
-        // Get your public key from: https://dashboard.vapi.ai/api-keys
-        const VAPI_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE';
-        
-        // Get this after running: npm run deploy
-        const ASSISTANT_ID = 'YOUR_ASSISTANT_ID_HERE';
+        let VAPI_PUBLIC_KEY = null;
+        let ASSISTANT_ID = null;
         
         // =================================================================
         // VAPI CLIENT
@@ -440,13 +437,24 @@
         let vapi = null;
         let isCallActive = false;
         
-        // Initialize Vapi when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            if (VAPI_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY_HERE') {
-                vapi = new Vapi(VAPI_PUBLIC_KEY);
-                setupVapiListeners();
-            } else {
-                console.log('⚠️ Please configure VAPI_PUBLIC_KEY in index.html');
+        // Initialize Vapi when page loads - fetch config from server
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                VAPI_PUBLIC_KEY = config.vapiPublicKey;
+                ASSISTANT_ID = config.assistantId;
+                
+                if (VAPI_PUBLIC_KEY && ASSISTANT_ID) {
+                    vapi = new Vapi(VAPI_PUBLIC_KEY);
+                    setupVapiListeners();
+                    console.log('✅ Vapi initialized successfully');
+                } else {
+                    console.log('⚠️ Missing VAPI_PUBLIC_KEY or VAPI_ASSISTANT_ID in .env');
+                }
+            } catch (error) {
+                console.error('Failed to load config:', error);
             }
         });
         

@@ -253,14 +253,21 @@ const tools = [
  * or configured in the Vapi Dashboard
  */
 const assistantConfig = {
-    name: 'Pawsome Pet Grooming - Debt Recovery Agent',
+    name: 'Pawsome Grooming Debt Agent',  // Max 40 chars
     
-    // The AI model configuration
+    // The AI model configuration with tools
     model: {
         provider: 'openai',
         model: 'gpt-4o',           // Using GPT-4o for best conversation quality
         temperature: 0.7,          // Balanced creativity and consistency
-        systemPrompt: systemPrompt
+        messages: [
+            {
+                role: 'system',
+                content: systemPrompt
+            }
+        ],
+        tools: tools,              // Tools go inside model for Vapi API
+        toolIds: []                // Empty array if not using Vapi's built-in tools
     },
     
     // Voice configuration - using a warm, professional voice
@@ -291,9 +298,6 @@ const assistantConfig = {
     
     // Server configuration for tool execution
     serverUrl: process.env.SERVER_URL || 'https://your-server.com/vapi/webhook',
-    
-    // Tool definitions
-    tools: tools,
     
     // Additional settings
     silenceTimeoutSeconds: 30,     // End call after 30s of silence
