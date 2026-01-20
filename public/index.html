@@ -229,6 +229,38 @@
         .loading::after { content: ''; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; margin-left: 0.5rem; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
+        /* Schedule Styles */
+        .slot-card { background: var(--bg-main); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: 1rem; transition: all 0.15s; }
+        .slot-card:hover { border-color: var(--primary); background: var(--primary-subtle); }
+        .slot-card.booked { background: var(--success-bg); border-color: var(--success); }
+        .slot-date { text-align: center; min-width: 60px; }
+        .slot-day { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .slot-month { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        .slot-info { flex: 1; }
+        .slot-dayname { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.125rem; }
+        .slot-time { font-size: 0.8rem; color: var(--text-secondary); }
+        .slot-status { padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .slot-status.available { background: var(--success-bg); color: var(--success); }
+        .slot-status.booked { background: var(--primary-subtle); color: var(--primary); }
+        
+        .service-card { background: var(--bg-main); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.15s; }
+        .service-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .service-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .service-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+        .service-price { font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
+        .service-duration { font-size: 0.75rem; color: var(--text-muted); }
+        .service-desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.4; }
+        
+        .booking-item { background: var(--bg-main); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem; }
+        .booking-item:last-child { margin-bottom: 0; }
+        .booking-avatar { width: 40px; height: 40px; background: var(--primary-subtle); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .booking-details { flex: 1; }
+        .booking-customer { font-weight: 600; font-size: 0.9rem; }
+        .booking-service { font-size: 0.8rem; color: var(--text-secondary); }
+        .booking-datetime { text-align: right; }
+        .booking-date { font-weight: 600; font-size: 0.85rem; }
+        .booking-time { font-size: 0.75rem; color: var(--text-muted); }
+        
         @media (max-width: 1200px) { .content { grid-template-columns: 1fr; } .stats-row { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main { margin-left: 0; } .stats-row { grid-template-columns: 1fr; } }
     </style>
@@ -260,6 +292,9 @@
             </a>
             <a class="nav-item" data-page="payments" onclick="navigateTo('payments')">
                 <span class="nav-icon">💳</span> Payments
+            </a>
+            <a class="nav-item" data-page="schedule" onclick="navigateTo('schedule')">
+                <span class="nav-icon">📅</span> Schedule
             </a>
             
         </nav>
@@ -462,6 +497,55 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Schedule Page -->
+        <div class="page-view" id="page-schedule">
+            <div class="content full-width">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <!-- Available Slots -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><span class="card-title-icon">🗓️</span> Available Slots</div>
+                            <span class="card-badge" id="slotCount">0 slots</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="availableSlotsGrid" style="display: grid; gap: 0.75rem;">
+                                <div class="loading">Loading slots...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Booked Appointments -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><span class="card-title-icon">✅</span> Booked Appointments</div>
+                            <span class="card-badge" id="bookingCount">0 booked</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="bookedAppointments">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📅</div>
+                                    <h3>No bookings yet</h3>
+                                    <p>Appointments booked via voice agent appear here.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Services -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <div class="card-title"><span class="card-title-icon">✨</span> Our Services</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="servicesGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                            <div class="loading">Loading services...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     
     <div class="toast" id="toast">
@@ -650,6 +734,95 @@
             return date.toLocaleDateString();
         }
         
+        async function fetchSchedule() {
+            try {
+                // Fetch available slots
+                const slotsRes = await fetch('/api/slots');
+                const slots = await slotsRes.json();
+                
+                document.getElementById('slotCount').textContent = `${slots.length} available`;
+                
+                if (slots.length === 0) {
+                    document.getElementById('availableSlotsGrid').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🗓️</div>
+                            <h3>No slots available</h3>
+                            <p>All appointment slots are booked.</p>
+                        </div>`;
+                } else {
+                    const slotsHtml = slots.map(s => {
+                        const day = parseInt(s.date.split('-')[2]);
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const month = months[parseInt(s.date.split('-')[1]) - 1];
+                        
+                        return `
+                            <div class="slot-card">
+                                <div class="slot-date">
+                                    <div class="slot-day">${day}</div>
+                                    <div class="slot-month">${month}</div>
+                                </div>
+                                <div class="slot-info">
+                                    <div class="slot-dayname">${s.dayName || 'Day'}</div>
+                                    <div class="slot-time">🕐 ${s.time}</div>
+                                </div>
+                                <span class="slot-status available">Available</span>
+                            </div>
+                        `;
+                    }).join('');
+                    document.getElementById('availableSlotsGrid').innerHTML = slotsHtml;
+                }
+                
+                // Fetch services
+                const servicesRes = await fetch('/api/services');
+                const services = await servicesRes.json();
+                
+                const serviceIcons = { 'Basic Grooming': '🛁', 'Full Grooming': '✂️', 'Premium Spa Package': '💎', 'Bath Only': '🚿' };
+                
+                const servicesHtml = services.map(s => `
+                    <div class="service-card">
+                        <div class="service-icon">${serviceIcons[s.name] || '🐕'}</div>
+                        <div class="service-name">${s.name}</div>
+                        <div class="service-price">$${s.price.toFixed(2)}</div>
+                        <div class="service-duration">⏱️ ${s.duration} min</div>
+                        <div class="service-desc">${s.description}</div>
+                    </div>
+                `).join('');
+                document.getElementById('servicesGrid').innerHTML = servicesHtml;
+                
+                // Fetch bookings
+                const bookingsRes = await fetch('/api/bookings');
+                const bookings = await bookingsRes.json();
+                
+                document.getElementById('bookingCount').textContent = `${bookings.length} booked`;
+                
+                if (bookings.length === 0) {
+                    document.getElementById('bookedAppointments').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <h3>No bookings yet</h3>
+                            <p>Appointments booked via voice agent appear here.</p>
+                        </div>`;
+                } else {
+                    const bookingsHtml = bookings.map(b => `
+                        <div class="booking-item">
+                            <div class="booking-avatar">🐕</div>
+                            <div class="booking-details">
+                                <div class="booking-customer">${b.customerName}</div>
+                                <div class="booking-service">${b.service} • ${b.petName}</div>
+                            </div>
+                            <div class="booking-datetime">
+                                <div class="booking-date">${b.date}</div>
+                                <div class="booking-time">${b.time}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    document.getElementById('bookedAppointments').innerHTML = bookingsHtml;
+                }
+            } catch (e) {
+                console.error('Failed to fetch schedule:', e);
+            }
+        }
+        
         function refreshAllData() {
             fetchStats();
             fetchCustomers();
@@ -671,13 +844,14 @@
             document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
             
-            const titles = { dashboard: 'Recovery Dashboard', customers: 'Customer Management', calls: 'Call History', payments: 'Payments' };
+            const titles = { dashboard: 'Recovery Dashboard', customers: 'Customer Management', calls: 'Call History', payments: 'Payments', schedule: 'Schedule & Appointments' };
             document.getElementById('pageTitle').textContent = titles[page] || 'Dashboard';
             
             // Refresh data when navigating
             if (page === 'calls') fetchCallHistory();
             if (page === 'payments') fetchPaymentHistory();
             if (page === 'customers') fetchCustomers();
+            if (page === 'schedule') fetchSchedule();
         }
         
         // =================================================================
