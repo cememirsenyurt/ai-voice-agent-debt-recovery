@@ -421,7 +421,7 @@
     </main>
     
     <!-- Vapi Web SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.umd.js"></script>
     <script>
         // =================================================================
         // CONFIGURATION - Loaded from server (keeps keys secure in .env)
@@ -440,27 +440,39 @@
         // Initialize Vapi when page loads - fetch config from server
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                console.log('🔄 Loading Vapi config...');
                 const response = await fetch('/api/config');
                 const config = await response.json();
+                
+                console.log('📋 Config loaded:', config);
                 
                 VAPI_PUBLIC_KEY = config.vapiPublicKey;
                 ASSISTANT_ID = config.assistantId;
                 
                 if (VAPI_PUBLIC_KEY && ASSISTANT_ID) {
-                    vapi = new Vapi(VAPI_PUBLIC_KEY);
+                    // Initialize Vapi with public key
+                    vapi = new window.Vapi(VAPI_PUBLIC_KEY);
                     setupVapiListeners();
                     console.log('✅ Vapi initialized successfully');
+                    console.log('   Public Key:', VAPI_PUBLIC_KEY.substring(0, 8) + '...');
+                    console.log('   Assistant ID:', ASSISTANT_ID.substring(0, 8) + '...');
+                    
+                    // Update UI to show ready
+                    document.getElementById('callStatus').textContent = 'Click to start a call';
                 } else {
-                    console.log('⚠️ Missing VAPI_PUBLIC_KEY or VAPI_ASSISTANT_ID in .env');
+                    console.error('⚠️ Missing VAPI_PUBLIC_KEY or VAPI_ASSISTANT_ID in .env');
+                    document.getElementById('callStatus').textContent = 'Configuration error - check .env';
                 }
             } catch (error) {
-                console.error('Failed to load config:', error);
+                console.error('❌ Failed to load config:', error);
+                document.getElementById('callStatus').textContent = 'Failed to load - check server';
             }
         });
         
         function setupVapiListeners() {
             // Call started
             vapi.on('call-start', () => {
+                console.log('📞 Call started');
                 isCallActive = true;
                 updateUI('active');
                 clearTranscript();
@@ -468,6 +480,7 @@
             
             // Call ended
             vapi.on('call-end', () => {
+                console.log('📞 Call ended');
                 isCallActive = false;
                 updateUI('idle');
             });
@@ -483,6 +496,7 @@
             
             // Transcripts
             vapi.on('message', (message) => {
+                console.log('💬 Message:', message.type);
                 if (message.type === 'transcript') {
                     addTranscriptLine(message.role, message.transcript);
                 }
@@ -490,9 +504,9 @@
             
             // Errors
             vapi.on('error', (error) => {
-                console.error('Vapi error:', error);
+                console.error('❌ Vapi error:', error);
                 updateUI('idle');
-                alert('Call error: ' + error.message);
+                document.getElementById('callStatus').textContent = 'Error: ' + (error.message || 'Unknown error');
             });
         }
         
@@ -501,19 +515,27 @@
         // =================================================================
         
         async function toggleCall() {
+            console.log('🔘 Toggle call clicked. vapi:', !!vapi, 'isActive:', isCallActive);
+            
             if (!vapi) {
-                alert('Please configure your Vapi public key and assistant ID first.\n\nSee the setup instructions in README.md');
+                alert('Vapi not initialized. Check browser console for errors.');
                 return;
             }
             
             if (isCallActive) {
+                console.log('⏹️ Stopping call...');
                 vapi.stop();
             } else {
                 try {
+                    console.log('▶️ Starting call with assistant:', ASSISTANT_ID);
+                    document.getElementById('callStatus').textContent = 'Connecting...';
+                    
                     await vapi.start(ASSISTANT_ID);
+                    
                 } catch (error) {
-                    console.error('Failed to start call:', error);
-                    alert('Failed to start call. Check console for details.');
+                    console.error('❌ Failed to start call:', error);
+                    document.getElementById('callStatus').textContent = 'Failed to connect';
+                    alert('Failed to start call: ' + (error.message || 'Unknown error'));
                 }
             }
         }
