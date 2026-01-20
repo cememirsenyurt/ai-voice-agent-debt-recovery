@@ -16,6 +16,7 @@
  */
 
 const { customers, services, availableSlots } = require('../data/customers');
+const activity = require('../data/activity');
 
 // Configuration
 const MINIMUM_SETTLEMENT_PERCENTAGE = process.env.MINIMUM_SETTLEMENT_PERCENTAGE || 70;
@@ -207,6 +208,19 @@ function processPayment({ customerId, amount, paymentMethod = 'card' }) {
         bookingMessage = `Payment received, but minimum settlement of $${minimumSettlement.toFixed(2)} not met. Need additional $${stillNeeded.toFixed(2)} to book appointments.`;
     }
 
+    const confirmationNumber = `PAY-${Date.now().toString(36).toUpperCase()}`;
+    
+    // Log the payment activity (shared between phone and web)
+    activity.logPayment({
+        confirmationNumber,
+        phone: customer.phone,
+        customerName: `${customer.firstName} ${customer.lastName}`,
+        amount: paymentAmount,
+        type: isFullPayment ? 'full' : 'partial',
+        previousBalance: customer.outstandingBalance + paymentAmount,
+        newBalance: newBalance
+    });
+
     return {
         success: true,
         paymentAmount: paymentAmount,
@@ -217,7 +231,7 @@ function processPayment({ customerId, amount, paymentMethod = 'card' }) {
         settlementPercentage: Math.round(settlementPercentage),
         bookingStatus: bookingStatus,
         message: `Payment of $${paymentAmount.toFixed(2)} processed successfully. ${bookingMessage}`,
-        confirmationNumber: `PAY-${Date.now().toString(36).toUpperCase()}`
+        confirmationNumber: confirmationNumber
     };
 }
 
@@ -395,6 +409,19 @@ function bookAppointment({ customerId, date, time, serviceId, prepaid = false })
 
     // Generate confirmation
     const confirmationNumber = `APT-${Date.now().toString(36).toUpperCase()}`;
+
+    // Log the booking activity (shared between phone and web)
+    activity.logBooking({
+        appointmentId: confirmationNumber,
+        phone: customer.phone,
+        customerName: `${customer.firstName} ${customer.lastName}`,
+        petName: customer.pets.map(p => p.name).join(', '),
+        service: service.name,
+        date: date,
+        time: time,
+        prepaymentRequired: eligibility.requiresPrepayment,
+        prepaymentAmount: eligibility.requiresPrepayment ? service.price : 0
+    });
 
     return {
         success: true,
