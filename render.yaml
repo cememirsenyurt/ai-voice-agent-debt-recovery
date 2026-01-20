@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: pawsome-voice-agent
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VAPI_PRIVATE_KEY
+        sync: false
+      - key: VAPI_PUBLIC_KEY
+        sync: false
+      - key: VAPI_ASSISTANT_ID
+        sync: false
+      - key: SOPHIE_ASSISTANT_ID
+        sync: false
+      - key: MARCUS_ASSISTANT_ID
+        sync: false
+      - key: EMMA_ASSISTANT_ID
+        sync: false
+      - key: ALEX_ASSISTANT_ID
+        sync: false
+      - key: VAPI_SQUAD_ID
+        sync: false
+      - key: BUSINESS_NAME
+        value: Pawsome Pet Grooming
+      - key: MINIMUM_SETTLEMENT_PERCENTAGE
+        value: "70"
