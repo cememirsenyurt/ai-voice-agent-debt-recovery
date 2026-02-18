@@ -9,8 +9,9 @@ const express = require('express');
 const router = express.Router();
 const toolHandlers = require('../tools/handlers');
 const activity = require('../data/activity');
+const { analyzeCallSentiment } = require('../services/sentiment');
 
-// Track active calls
+// Track active calls with their transcripts
 const activeCalls = new Map();
 
 // =============================================================================
@@ -42,12 +43,13 @@ router.post('/webhook', async (req, res) => {
                 console.log(`[Vapi] Status update: ${message.status}`);
                 
                 if (message.status === 'in-progress') {
-                    // Call started - create tracking entry
+                    // Call started - create tracking entry with transcript array
                     const callId = req.body.call?.id || `call-${Date.now()}`;
                     activeCalls.set(callId, {
                         startTime: Date.now(),
                         customerName: 'Unknown',
-                        customerPhone: 'Unknown'
+                        customerPhone: 'Unknown',
+                        transcript: [] // Collect transcript messages here
                     });
                     
                     // Log call start
@@ -64,8 +66,19 @@ router.post('/webhook', async (req, res) => {
                 return res.json({ success: true });
 
             case 'transcript':
-                // Log conversation transcripts
-                console.log(`[Vapi] Transcript: ${message.transcript}`);
+                // Collect transcript for sentiment analysis
+                const transcriptCallId = req.body.call?.id;
+                if (transcriptCallId && activeCalls.has(transcriptCallId)) {
+                    const callData = activeCalls.get(transcriptCallId);
+                    const role = message.role === 'assistant' ? 'Alex' : 'Customer';
+                    callData.transcript.push(`${role}: ${message.transcript}`);
+                    
+                    // Update customer name if detected
+                    if (message.role === 'user' && callData.customerName === 'Unknown') {
+                        // Try to extract name from verification context
+                    }
+                }
+                console.log(`[Vapi] Transcript (${message.role}): ${message.transcript}`);
                 return res.json({ success: true });
 
             case 'end-of-call-report':
@@ -75,6 +88,9 @@ router.post('/webhook', async (req, res) => {
                 // Get call details from the report
                 const callSummary = message.summary || '';
                 const duration = Math.round((message.durationSeconds || 0));
+                const endCallId = req.body.call?.id;
+                const customerPhone = message.call?.customer?.number || 'Web Call';
+                const customerName = message.call?.customer?.name || 'Customer';
                 
                 // Determine outcome based on summary
                 let outcome = 'none';
@@ -82,15 +98,68 @@ router.post('/webhook', async (req, res) => {
                 else if (callSummary.toLowerCase().includes('book') || callSummary.toLowerCase().includes('appointment')) outcome = 'booking';
                 else if (callSummary.toLowerCase().includes('callback')) outcome = 'callback';
                 
-                // Log the completed call
-                activity.logCall({
-                    phone: message.call?.customer?.number || 'Web Call',
-                    customerName: message.call?.customer?.name || 'Customer',
+                // Get transcript from Vapi's end-of-call-report OR from our collected data
+                let fullTranscript = '';
+                
+                // Vapi provides transcript in the report
+                if (message.transcript) {
+                    fullTranscript = message.transcript;
+                } else if (message.messages && Array.isArray(message.messages)) {
+                    // Build from messages array
+                    fullTranscript = message.messages
+                        .filter(m => m.role && m.content)
+                        .map(m => `${m.role === 'assistant' ? 'Alex' : 'Customer'}: ${m.content}`)
+                        .join('\n');
+                } else if (endCallId && activeCalls.has(endCallId)) {
+                    // Use our collected transcript
+                    fullTranscript = activeCalls.get(endCallId).transcript.join('\n');
+                }
+                
+                // Log the completed call first
+                const loggedCall = activity.logCall({
+                    phone: customerPhone,
+                    customerName: customerName,
                     duration: duration,
                     status: 'completed',
                     outcome: outcome,
                     notes: callSummary.substring(0, 200)
                 });
+                
+                // Run sentiment analysis server-side (async, don't block response)
+                if (fullTranscript && fullTranscript.length > 20) {
+                    console.log('[Vapi] Running sentiment analysis on transcript...');
+                    analyzeCallSentiment(fullTranscript, {
+                        duration,
+                        customerName,
+                        customerPhone,
+                        callId: loggedCall.id
+                    }).then(sentiment => {
+                        // Store sentiment with the call
+                        activity.updateCallSentiment(loggedCall.id, sentiment);
+                        
+                        // Log sentiment activity
+                        const emoji = sentiment.overallSentiment >= 7 ? '😊' : 
+                                     sentiment.overallSentiment >= 4 ? '😐' : '😟';
+                        activity.addActivity('sentiment', emoji,
+                            `Sentiment analyzed: ${sentiment.summary}`,
+                            {
+                                callId: loggedCall.id,
+                                customerName,
+                                sentiment: sentiment.overallSentiment,
+                                satisfaction: sentiment.customerSatisfaction,
+                                tags: sentiment.tags
+                            }
+                        );
+                        console.log('[Vapi] Sentiment analysis complete:', sentiment.summary);
+                    }).catch(err => {
+                        console.error('[Vapi] Sentiment analysis failed:', err.message);
+                    });
+                }
+                
+                // Clean up active call tracking
+                if (endCallId) {
+                    activeCalls.delete(endCallId);
+                }
                 
                 return res.json({ success: true });
 

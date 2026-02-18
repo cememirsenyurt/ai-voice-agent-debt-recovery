@@ -263,6 +263,28 @@
         
         @media (max-width: 1200px) { .content { grid-template-columns: 1fr; } .stats-row { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main { margin-left: 0; } .stats-row { grid-template-columns: 1fr; } }
+        
+        /* Sentiment Analysis Styles */
+        .sentiment-card { border-left: 4px solid var(--primary); }
+        .sentiment-score-row { display: flex; gap: 1.5rem; margin-bottom: 1rem; }
+        .sentiment-score-item { flex: 1; text-align: center; padding: 1rem; background: var(--bg-main); border-radius: 8px; }
+        .sentiment-score-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+        .sentiment-score-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; text-transform: uppercase; }
+        .sentiment-summary { padding: 0.75rem 1rem; background: var(--primary-subtle); border-radius: 8px; margin-bottom: 1rem; font-style: italic; color: var(--text-secondary); }
+        .sentiment-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .sentiment-tag { padding: 0.25rem 0.6rem; background: var(--bg-main); border-radius: 12px; font-size: 0.7rem; color: var(--text-secondary); border: 1px solid var(--border); }
+        .sentiment-tag.positive { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+        .sentiment-tag.negative { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+        .sentiment-section { margin-top: 1rem; }
+        .sentiment-section-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; }
+        .sentiment-list { padding-left: 1.25rem; }
+        .sentiment-list li { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .sentiment-positive { color: var(--success); }
+        .sentiment-neutral { color: var(--warning); }
+        .sentiment-negative { color: var(--danger); }
+        .agent-feedback { padding: 0.75rem 1rem; background: #F0F9FF; border-radius: 8px; font-size: 0.85rem; color: #0369A1; border-left: 3px solid #0EA5E9; }
+        .export-btn { padding: 0.4rem 0.75rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: 6px; font-size: 0.7rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .export-btn:hover { background: var(--primary-subtle); border-color: var(--primary); color: var(--primary); }
     </style>
 </head>
 <body>
@@ -420,6 +442,21 @@
                             <div class="help-title">💡 Quick Start</div>
                             <div class="help-text">
                                 Click call and say: <code>"My phone is 555-0101"</code> to test with Sarah Johnson.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sentiment Analysis Card -->
+                    <div class="card sentiment-card" id="sentimentCard" style="display: none; margin-top: 1rem;">
+                        <div class="card-header">
+                            <div class="card-title"><span class="card-title-icon">🧠</span> Call Sentiment Analysis</div>
+                            <button class="export-btn" id="exportReasoningBtn" onclick="exportSentimentReasoning()" style="display: none;">
+                                📄 Export Reasoning
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="sentimentContent">
+                                <div class="loading">Analyzing call sentiment...</div>
                             </div>
                         </div>
                     </div>
@@ -938,6 +975,9 @@
         // =================================================================
         
         let vapi = null, isCallActive = false, ASSISTANT_ID = null, SQUAD_ID = null, ALEX_ID = null;
+        let callTranscript = []; // Store transcript for sentiment analysis
+        let currentCustomerName = 'Unknown';
+        let lastSentimentData = null; // Store full sentiment for export
         
         async function toggleCall() {
             if (!vapi) { alert('Vapi not initialized'); return; }
@@ -977,19 +1017,28 @@
                     
                     vapi.on('call-start', () => {
                         isCallActive = true;
+                        callTranscript = []; // Reset transcript
+                        currentCustomerName = 'Unknown';
                         document.getElementById('callButton').classList.add('active');
                         document.getElementById('callButton').textContent = '⏹️';
                         const agent = agents[currentAgentKey];
                         document.getElementById('callStatus').textContent = `Connected to ${agent.name}`;
                         document.getElementById('transcript').innerHTML = '';
+                        document.getElementById('sentimentCard').style.display = 'none'; // Hide previous sentiment
                     });
                     
                     vapi.on('call-end', () => {
                         isCallActive = false;
                         document.getElementById('callButton').classList.remove('active');
                         document.getElementById('callButton').textContent = '📞';
-                        document.getElementById('callStatus').textContent = 'Call ended';
-                        // Refresh data after call ends to show any updates from phone
+                        document.getElementById('callStatus').textContent = 'Call ended - Analyzing sentiment...';
+                        
+                        // Send transcript to server for Claude analysis
+                        if (callTranscript.length > 0) {
+                            analyzeCallSentiment();
+                        }
+                        
+                        // Refresh data after call ends
                         setTimeout(refreshAllData, 1000);
                     });
                     
@@ -1001,11 +1050,20 @@
                     
                     vapi.on('message', (msg) => {
                         if (msg.type === 'transcript') {
+                            // Only show FINAL transcripts, not partial/streaming ones
+                            if (msg.transcriptType !== 'final') {
+                                return; // Skip partial transcripts
+                            }
+                            
                             const t = document.getElementById('transcript');
                             const agent = agents[currentAgentKey];
                             const speaker = msg.role === 'assistant' ? `${agent.avatar} ${agent.name}` : '👤 You';
                             t.innerHTML += `<div class="transcript-line ${msg.role}"><div class="transcript-speaker">${speaker}</div><div>${msg.transcript}</div></div>`;
                             t.scrollTop = t.scrollHeight;
+                            
+                            // Store transcript for sentiment analysis
+                            const speakerName = msg.role === 'assistant' ? agent.name : 'Customer';
+                            callTranscript.push(`${speakerName}: ${msg.transcript}`);
                             
                             // Detect if agent changed based on what they say
                             if (msg.role === 'assistant') {
@@ -1020,6 +1078,210 @@
             } catch (e) {
                 console.error('Failed to init Vapi:', e);
             }
+        }
+        
+        // =================================================================
+        // SENTIMENT ANALYSIS
+        // =================================================================
+        
+        // Analyze call sentiment by sending transcript to server
+        async function analyzeCallSentiment() {
+            const sentimentCard = document.getElementById('sentimentCard');
+            const sentimentContent = document.getElementById('sentimentContent');
+            
+            // Show loading state
+            sentimentCard.style.display = 'block';
+            sentimentContent.innerHTML = '<div class="loading">🧠 Analyzing call sentiment with Claude...</div>';
+            document.getElementById('exportReasoningBtn').style.display = 'none';
+            
+            // Need at least some transcript
+            if (callTranscript.length === 0) {
+                sentimentContent.innerHTML = '<div class="error">No transcript captured for analysis.</div>';
+                return;
+            }
+            
+            try {
+                const transcript = callTranscript.join('\n');
+                console.log('[Sentiment] Sending transcript for analysis:', transcript.substring(0, 200) + '...');
+                
+                const response = await fetch('/api/analyze-sentiment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transcript,
+                        customerName: currentCustomerName,
+                        customerPhone: 'Web Call'
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Analysis failed');
+                }
+                
+                const sentiment = await response.json();
+                
+                // Update customer name if extracted from transcript
+                if (sentiment.extractedCustomerName) {
+                    currentCustomerName = sentiment.extractedCustomerName;
+                }
+                
+                // Store full data for export
+                lastSentimentData = {
+                    ...sentiment,
+                    transcript,
+                    customerName: sentiment.extractedCustomerName || currentCustomerName,
+                    customerPhone: sentiment.extractedCustomerPhone || 'Web Call',
+                    exportedAt: new Date().toISOString()
+                };
+                
+                displaySentimentResults(sentiment);
+                document.getElementById('exportReasoningBtn').style.display = 'block';
+                document.getElementById('callStatus').textContent = 'Call ended';
+                
+                // Show toast
+                const emoji = sentiment.overallSentiment >= 7 ? '😊' : sentiment.overallSentiment >= 4 ? '😐' : '😟';
+                showToast(emoji, 'Sentiment Analyzed', sentiment.summary || 'Analysis complete');
+                
+            } catch (error) {
+                console.error('[Sentiment] Analysis failed:', error);
+                sentimentContent.innerHTML = `<div class="error">Sentiment analysis failed: ${error.message}</div>`;
+            }
+        }
+        
+        function displaySentimentResults(sentiment) {
+            const sentimentContent = document.getElementById('sentimentContent');
+            
+            // Determine colors based on scores
+            const sentimentColor = sentiment.overallSentiment >= 7 ? 'var(--success)' : 
+                                   sentiment.overallSentiment >= 4 ? 'var(--warning)' : 'var(--danger)';
+            const satisfactionColor = sentiment.customerSatisfaction >= 7 ? 'var(--success)' : 
+                                      sentiment.customerSatisfaction >= 4 ? 'var(--warning)' : 'var(--danger)';
+            
+            // Build tags HTML
+            const positiveTags = ['payment_made', 'booking_made', 'satisfied_customer'];
+            const negativeTags = ['complaint', 'frustrated_customer', 'price_concern'];
+            
+            const tagsHtml = (sentiment.tags || []).map(tag => {
+                const tagClass = positiveTags.includes(tag) ? 'positive' : 
+                                negativeTags.includes(tag) ? 'negative' : '';
+                const displayTag = tag.replace(/_/g, ' ');
+                return `<span class="sentiment-tag ${tagClass}">${displayTag}</span>`;
+            }).join('');
+            
+            // Build pain points HTML
+            const painPointsHtml = (sentiment.painPoints || []).length > 0 
+                ? `<ul class="sentiment-list">${sentiment.painPoints.map(p => `<li>${p}</li>`).join('')}</ul>`
+                : '<p style="font-size: 0.85rem; color: var(--text-muted);">None identified</p>';
+            
+            // Build positive points HTML
+            const positivePointsHtml = (sentiment.positivePoints || []).length > 0 
+                ? `<ul class="sentiment-list">${sentiment.positivePoints.map(p => `<li>${p}</li>`).join('')}</ul>`
+                : '<p style="font-size: 0.85rem; color: var(--text-muted);">None identified</p>';
+            
+            // Resolution badge
+            const resolutionColors = {
+                resolved: 'var(--success)',
+                partial: 'var(--warning)',
+                unresolved: 'var(--danger)',
+                unknown: 'var(--text-muted)'
+            };
+            const resolutionColor = resolutionColors[sentiment.resolutionStatus] || resolutionColors.unknown;
+            
+            sentimentContent.innerHTML = `
+                <div class="sentiment-summary">"${sentiment.summary || 'No summary available'}"</div>
+                
+                <div class="sentiment-score-row">
+                    <div class="sentiment-score-item">
+                        <div class="sentiment-score-value" style="color: ${sentimentColor}">${sentiment.overallSentiment || '?'}</div>
+                        <div class="sentiment-score-label">Sentiment</div>
+                    </div>
+                    <div class="sentiment-score-item">
+                        <div class="sentiment-score-value" style="color: ${satisfactionColor}">${sentiment.customerSatisfaction || '?'}</div>
+                        <div class="sentiment-score-label">Satisfaction</div>
+                    </div>
+                    <div class="sentiment-score-item">
+                        <div class="sentiment-score-value" style="color: ${resolutionColor}; font-size: 1rem; text-transform: capitalize;">${sentiment.resolutionStatus || 'unknown'}</div>
+                        <div class="sentiment-score-label">Resolution</div>
+                    </div>
+                </div>
+                
+                ${tagsHtml ? `<div class="sentiment-tags">${tagsHtml}</div>` : ''}
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="sentiment-section">
+                        <div class="sentiment-section-title">⚠️ Pain Points</div>
+                        ${painPointsHtml}
+                    </div>
+                    <div class="sentiment-section">
+                        <div class="sentiment-section-title">✅ Positive Moments</div>
+                        ${positivePointsHtml}
+                    </div>
+                </div>
+                
+                ${sentiment.agentNotes ? `
+                <div class="sentiment-section" style="margin-top: 1rem;">
+                    <div class="sentiment-section-title">🤖 Agent Performance</div>
+                    <div class="agent-feedback">${sentiment.agentNotes}</div>
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        function exportSentimentReasoning() {
+            if (!lastSentimentData) {
+                alert('No sentiment data to export');
+                return;
+            }
+            
+            // Format the data nicely for readability
+            const exportData = {
+                exportInfo: {
+                    exportedAt: new Date().toISOString(),
+                    customerName: lastSentimentData.extractedCustomerName || lastSentimentData.customerName || lastSentimentData.callMeta?.customerName || 'Unknown',
+                    customerPhone: lastSentimentData.extractedCustomerPhone || lastSentimentData.customerPhone || lastSentimentData.callMeta?.customerPhone || 'Unknown',
+                    callId: lastSentimentData.callId || 'Unknown',
+                    duration: lastSentimentData.duration || lastSentimentData.callMeta?.duration || 'Unknown',
+                    analyzedAt: lastSentimentData.analyzedAt,
+                    model: lastSentimentData.model || 'claude-sonnet-4-20250514',
+                    purpose: "Sentiment Analysis Reasoning Export - For testing and review"
+                },
+                scores: {
+                    overallSentiment: lastSentimentData.overallSentiment,
+                    customerSatisfaction: lastSentimentData.customerSatisfaction,
+                    resolutionStatus: lastSentimentData.resolutionStatus
+                },
+                reasoning: {
+                    sentimentReasoning: lastSentimentData.reasoning?.sentimentReasoning || 'Not available',
+                    satisfactionReasoning: lastSentimentData.reasoning?.satisfactionReasoning || 'Not available',
+                    resolutionReasoning: lastSentimentData.reasoning?.resolutionReasoning || 'Not available',
+                    tagReasons: lastSentimentData.reasoning?.tagReasons || {},
+                    painPointEvidence: lastSentimentData.reasoning?.painPointEvidence || {},
+                    positiveEvidence: lastSentimentData.reasoning?.positiveEvidence || {},
+                    agentPerformanceEvidence: lastSentimentData.reasoning?.agentPerformanceEvidence || 'Not available'
+                },
+                analysis: {
+                    summary: lastSentimentData.summary,
+                    tags: lastSentimentData.tags || [],
+                    painPoints: lastSentimentData.painPoints || [],
+                    positivePoints: lastSentimentData.positivePoints || [],
+                    agentNotes: lastSentimentData.agentNotes
+                },
+                callMeta: lastSentimentData.callMeta || {}
+            };
+            
+            // Create and download JSON file
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sentiment-reasoning-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('📄', 'Exported', 'Sentiment reasoning JSON downloaded');
         }
         
         // =================================================================

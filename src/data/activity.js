@@ -82,6 +82,23 @@ function updateCallStatus(callId, status, outcome, notes) {
     return call;
 }
 
+function updateCallSentiment(callId, sentiment) {
+    const call = callHistory.find(c => c.id === callId);
+    if (call) {
+        call.sentiment = sentiment;
+    }
+    return call;
+}
+
+// Store sentiment from calls without a specific callId (web calls)
+function logCallWithSentiment(callData, sentiment) {
+    const call = logCall(callData);
+    if (sentiment) {
+        call.sentiment = sentiment;
+    }
+    return call;
+}
+
 // =============================================================================
 // PAYMENT TRACKING
 // =============================================================================
@@ -163,15 +180,93 @@ function getStats() {
     };
 }
 
+function getSentimentStats() {
+    const callsWithSentiment = callHistory.filter(c => c.sentiment);
+    
+    if (callsWithSentiment.length === 0) {
+        return {
+            totalAnalyzed: 0,
+            averageSentiment: null,
+            averageSatisfaction: null,
+            sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
+            commonTags: [],
+            recentSentiments: []
+        };
+    }
+    
+    // Calculate averages
+    const avgSentiment = callsWithSentiment.reduce((sum, c) => sum + c.sentiment.overallSentiment, 0) / callsWithSentiment.length;
+    const avgSatisfaction = callsWithSentiment.reduce((sum, c) => sum + c.sentiment.customerSatisfaction, 0) / callsWithSentiment.length;
+    
+    // Sentiment breakdown
+    const breakdown = { positive: 0, neutral: 0, negative: 0 };
+    callsWithSentiment.forEach(c => {
+        if (c.sentiment.overallSentiment >= 7) breakdown.positive++;
+        else if (c.sentiment.overallSentiment >= 4) breakdown.neutral++;
+        else breakdown.negative++;
+    });
+    
+    // Common tags
+    const tagCounts = {};
+    callsWithSentiment.forEach(c => {
+        (c.sentiment.tags || []).forEach(tag => {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+    });
+    const commonTags = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([tag, count]) => ({ tag, count }));
+    
+    // Recent sentiments (last 10)
+    const recentSentiments = callsWithSentiment.slice(0, 10).map(c => ({
+        callId: c.id,
+        customerName: c.customerName,
+        sentiment: c.sentiment.overallSentiment,
+        satisfaction: c.sentiment.customerSatisfaction,
+        summary: c.sentiment.summary,
+        tags: c.sentiment.tags,
+        timestamp: c.timestamp
+    }));
+    
+    return {
+        totalAnalyzed: callsWithSentiment.length,
+        averageSentiment: Math.round(avgSentiment * 10) / 10,
+        averageSatisfaction: Math.round(avgSatisfaction * 10) / 10,
+        sentimentBreakdown: breakdown,
+        commonTags,
+        recentSentiments
+    };
+}
+
+function getLatestSentiment() {
+    // Find the most recent call with sentiment data
+    const callWithSentiment = callHistory.find(c => c.sentiment);
+    if (!callWithSentiment) return null;
+    
+    return {
+        callId: callWithSentiment.id,
+        customerName: callWithSentiment.customerName,
+        customerPhone: callWithSentiment.customerPhone,
+        duration: callWithSentiment.duration,
+        timestamp: callWithSentiment.timestamp,
+        ...callWithSentiment.sentiment
+    };
+}
+
 module.exports = {
     addActivity,
     getActivities,
     logCall,
     getCallHistory,
     updateCallStatus,
+    updateCallSentiment,
+    logCallWithSentiment,
     logPayment,
     getPaymentHistory,
     logBooking,
     getBookingHistory,
-    getStats
+    getStats,
+    getSentimentStats,
+    getLatestSentiment
 };

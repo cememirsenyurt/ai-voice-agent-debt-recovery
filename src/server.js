@@ -16,6 +16,7 @@ const vapiRoutes = require('./routes/vapi');
 // Import data modules
 const { customers, services, availableSlots } = require('./data/customers');
 const activity = require('./data/activity');
+const { analyzeCallSentiment } = require('./services/sentiment');
 
 // Initialize Express app
 const app = express();
@@ -176,6 +177,74 @@ app.get('/api/services', (req, res) => {
 // Get available slots
 app.get('/api/slots', (req, res) => {
     res.json(availableSlots.filter(s => s.available));
+});
+
+// =============================================================================
+// SENTIMENT ANALYSIS ENDPOINTS
+// =============================================================================
+
+// Analyze sentiment from transcript (called by frontend for web calls)
+app.post('/api/analyze-sentiment', async (req, res) => {
+    try {
+        const { transcript, customerName, customerPhone, duration } = req.body;
+        
+        if (!transcript || transcript.trim().length < 20) {
+            return res.status(400).json({ error: 'Transcript too short' });
+        }
+        
+        console.log(`[Sentiment] Analyzing call for ${customerName || 'Unknown'}...`);
+        
+        // Run sentiment analysis with Claude
+        const sentiment = await analyzeCallSentiment(transcript, {
+            customerName,
+            customerPhone,
+            duration
+        });
+        
+        // Use extracted customer info from Claude if available
+        const finalCustomerName = sentiment.extractedCustomerName || customerName || 'Customer';
+        const finalCustomerPhone = sentiment.extractedCustomerPhone || customerPhone || 'Web Call';
+        
+        // Log the call with sentiment
+        const loggedCall = activity.logCall({
+            phone: finalCustomerPhone,
+            customerName: finalCustomerName,
+            duration: duration || 0,
+            status: 'completed',
+            outcome: sentiment.tags?.includes('payment_made') ? 'payment' : 
+                     sentiment.tags?.includes('booking_made') ? 'booking' : 'none',
+            notes: sentiment.summary
+        });
+        
+        // Attach sentiment to call
+        activity.updateCallSentiment(loggedCall.id, sentiment);
+        
+        // Log sentiment activity
+        const emoji = sentiment.overallSentiment >= 7 ? '😊' : 
+                     sentiment.overallSentiment >= 4 ? '😐' : '😟';
+        activity.addActivity('sentiment', emoji,
+            `Sentiment: ${sentiment.summary}`,
+            { callId: loggedCall.id, sentiment: sentiment.overallSentiment }
+        );
+        
+        res.json(sentiment);
+        
+    } catch (error) {
+        console.error('[Sentiment] API error:', error);
+        res.status(500).json({ error: 'Failed to analyze sentiment', details: error.message });
+    }
+});
+
+// Get the latest sentiment analysis
+app.get('/api/sentiment/latest', (req, res) => {
+    const latestSentiment = activity.getLatestSentiment();
+    res.json(latestSentiment || { pending: true, message: 'No sentiment data yet' });
+});
+
+// Get sentiment history/stats
+app.get('/api/sentiment-stats', (req, res) => {
+    const stats = activity.getSentimentStats();
+    res.json(stats);
 });
 
 // =============================================================================
